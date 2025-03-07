@@ -16,9 +16,12 @@ public class CurrentWeatherScene {
     public CurrentWeatherScene(Stage primaryStage) {
         Button switchToListSceneButton = new Button("List");
 
+        // Get Data
+        ArrayList<Period> DayNightForecast = DataFetcher.getDailyForecast("LOT", 77, 70);
+        TextField temperatureField = new TextField("Today's temperature is: " + DayNightForecast.get(0).temperature + "°F");
+
         // Layout
-        VBox root = new VBox();
-        root.getChildren().add(switchToListSceneButton);
+        VBox root = new VBox(temperatureField, switchToListSceneButton);
 
         // Scene
         scene = new Scene(root, 700, 700);
