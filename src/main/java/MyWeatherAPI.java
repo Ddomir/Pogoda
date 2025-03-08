@@ -63,8 +63,6 @@ public class MyWeatherAPI {
             pointData.put("gridY", properties.get("gridY").toString());
             pointData.put("forecastURL", (String) properties.get("forecast"));
             pointData.put("forecastHourlyURL", (String) properties.get("forecastHourly"));
-
-            System.out.println("Extracted data: " + pointData);
         } catch (ParseException e) {
             System.err.println("Failed to parse JSON response: " + e.getMessage());
             e.printStackTrace();
@@ -147,4 +145,88 @@ public class MyWeatherAPI {
 
         return hourlyDataList;
     }
+
+    // Fetch daily data
+    public static List<WeatherData.DailyData> getDailyData(String dailyURL) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(dailyURL))
+                .header("User-Agent", "JavaWeatherApp/1.0 (your-email@example.com)")  // Important for NWS API
+                .build();
+
+        HttpResponse<String> response = null;
+        try {
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        if (response == null || response.statusCode() != 200) {
+            System.err.println("Failed to fetch daily data: " +
+                    (response != null ? "Status: " + response.statusCode() + ", Body: " + response.body() : "Response was null"));
+            return null;
+        }
+
+        String jsonResponse = response.body();
+        return parseDailyData(jsonResponse);
+    }
+
+    // Parse daily data
+    private static List<WeatherData.DailyData> parseDailyData(String json) {
+        List<WeatherData.DailyData> dailyDataList = new ArrayList<>();
+        JSONParser parser = new JSONParser();
+
+        try {
+            JSONObject jsonObject = (JSONObject) parser.parse(json);
+            JSONObject properties = (JSONObject) jsonObject.get("properties");
+            JSONArray periods = (JSONArray) properties.get("periods");
+
+            // Iterate through periods and group by day
+            for (int i = 0; i < periods.size(); i += 2) { // Each day has 2 periods (day and night)
+                JSONObject dayPeriod = (JSONObject) periods.get(i);
+                JSONObject nightPeriod = (JSONObject) periods.get(i + 1);
+
+                // Extract day data
+                String date = ((String) dayPeriod.get("startTime")).split("T")[0]; // Extract date (YYYY-MM-DD)
+                double dayTemperature = ((Number) dayPeriod.get("temperature")).doubleValue();
+                String dayForecast = (String) dayPeriod.get("shortForecast");
+
+                // Extract night data
+                double nightTemperature = ((Number) nightPeriod.get("temperature")).doubleValue();
+                String nightForecast = (String) nightPeriod.get("shortForecast");
+
+                // Handle precipitation chance (use day period's value)
+                JSONObject probabilityOfPrecipitation = (JSONObject) dayPeriod.get("probabilityOfPrecipitation");
+                int precipitationChance = 0; // Default to 0 if precipitation data is missing
+                if (probabilityOfPrecipitation != null) {
+                    Number precipitationValue = (Number) probabilityOfPrecipitation.get("value");
+                    if (precipitationValue != null) {
+                        precipitationChance = precipitationValue.intValue();
+                    }
+                }
+
+                // Create and populate DailyData object
+                WeatherData.DailyData dailyData = new WeatherData.DailyData();
+                dailyData.setTime(date);
+                dailyData.setDayTemperature(dayTemperature);
+                dailyData.setNightTemperature(nightTemperature);
+                dailyData.setPrecipitationChance(precipitationChance);
+                dailyData.setShortForecast(dayForecast + " / " + nightForecast);
+
+                dailyDataList.add(dailyData);
+
+                // Stop after 7 days
+                if (dailyDataList.size() >= 7) {
+                    break;
+                }
+            }
+        } catch (ParseException e) {
+            System.err.println("Failed to parse JSON response: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return dailyDataList;
+    }
+
+
 }

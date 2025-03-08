@@ -31,6 +31,14 @@ public class DataFetcher {
         }
         weatherData.setHourlyData(hourlyData);
 
+        // Step 3: Fetch daily data
+        List<WeatherData.DailyData> dailyData = getDailyData(locationData.getForecastURL());
+        if (dailyData == null) {
+            System.err.println("Failed to fetch daily data for ZIP code: " + zipcode);
+            return null;
+        }
+        weatherData.setDailyData(dailyData);
+
         return weatherData;
     }
 
@@ -69,4 +77,11 @@ public class DataFetcher {
     private static List<WeatherData.HourlyData> getHourlyData(String hourlyURL) {
         return MyWeatherAPI.getHourlyData(hourlyURL);
     }
+
+    // Fetch daily data
+    private static List<WeatherData.DailyData> getDailyData(String dailyURL) {
+        return MyWeatherAPI.getDailyData(dailyURL);
+    }
+
+
 }

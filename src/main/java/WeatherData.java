@@ -57,7 +57,6 @@ public class WeatherData {
         private double dewPoint;
         private String windDirection;
         private String windSpeed;
-        private String time;
 
         // Getters and Setters
         public double getTemperature() { return temperature; }
@@ -80,9 +79,6 @@ public class WeatherData {
 
         public String getWindSpeed() { return windSpeed; }
         public void setWindSpeed(String windSpeed) { this.windSpeed = windSpeed; }
-
-        public String getTime() { return time; }
-        public void setTime(String time) { this.time = time; }
     }
 
     public static class HourlyData {
@@ -106,17 +102,21 @@ public class WeatherData {
     }
 
     public static class DailyData {
-        private String time; // In 12hr am/pm format
-        private double temperature;
+        private String date; // In 12hr am/pm format
+        private double dayTemperature;
+        private double nightTemperature;
         private int precipitationChance;
         private String shortForecast;
 
         // Getters and Setters
-        public String getTime() { return time; }
-        public void setTime(String time) { this.time = time; }
+        public String getTime() { return date; }
+        public void setTime(String time) { this.date = time; }
 
-        public double getTemperature() { return temperature; }
-        public void setTemperature(double temperature) { this.temperature = temperature; }
+        public double getDayTemperature() { return dayTemperature; }
+        public void setDayTemperature(double temperature) { this.dayTemperature = temperature; }
+
+        public double getNightTemperature() { return nightTemperature; }
+        public void setNightTemperature(double temperature) { this.nightTemperature = temperature; }
 
         public int getPrecipitationChance() { return precipitationChance; }
         public void setPrecipitationChance(int precipitationChance) { this.precipitationChance = precipitationChance; }

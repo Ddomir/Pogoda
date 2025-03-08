@@ -38,6 +38,15 @@ public class CurrentWeatherScene {
                 System.out.println(hour.getTime() + ": " + hour.getTemperature() + " F°, " +
                         hour.getShortForecast() + ", " + hour.getPrecipitationChance() + "%");
             }
+
+            // Print daily data
+            System.out.println("\nHourly Data:");
+            List<WeatherData.DailyData> dailyData = weatherData.getDailyData();
+            for (WeatherData.DailyData day : dailyData) {
+                System.out.println(day.getTime() + ": Day - " + day.getDayTemperature() + " F°, Night - " + day.getNightTemperature()
+                        + " F°, " + day.getShortForecast() + ", " + day.getPrecipitationChance() + "%");
+            }
+
         } else {
             System.out.println("Failed to fetch weather data");
         }
