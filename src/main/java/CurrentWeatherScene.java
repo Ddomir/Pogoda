@@ -8,6 +8,7 @@ import org.w3c.dom.Text;
 import weather.Period;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class CurrentWeatherScene {
@@ -19,18 +20,26 @@ public class CurrentWeatherScene {
 
         String zipcode = "60018";
 
-        WeatherData.LocationData locationData = DataFetcher.getLocationData(zipcode);
-        if (locationData != null) {
-            System.out.println("City: " + locationData.getCity());
-            System.out.println("State: " + locationData.getState());
-            System.out.println("County: " + locationData.getCounty())   ;
+        WeatherData weatherData = DataFetcher.fetchWeatherData(zipcode);
+        if (weatherData != null) {
+            // Print location data
+            WeatherData.LocationData locationData = weatherData.getLocationData();
+            System.out.println("Location Data:");
             System.out.println("Region: " + locationData.getRegion());
             System.out.println("GridX: " + locationData.getGridX());
             System.out.println("GridY: " + locationData.getGridY());
             System.out.println("Forecast URL: " + locationData.getForecastURL());
             System.out.println("Hourly Forecast URL: " + locationData.getHourlyForecastURL());
+
+            // Print hourly data
+            System.out.println("\nHourly Data:");
+            List<WeatherData.HourlyData> hourlyData = weatherData.getHourlyData();
+            for (WeatherData.HourlyData hour : hourlyData) {
+                System.out.println(hour.getTime() + ": " + hour.getTemperature() + " F°, " +
+                        hour.getShortForecast() + ", " + hour.getPrecipitationChance() + "%");
+            }
         } else {
-            System.out.println("Invalid ZIP code");
+            System.out.println("Failed to fetch weather data");
         }
 
 

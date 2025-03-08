@@ -57,6 +57,7 @@ public class WeatherData {
         private double dewPoint;
         private String windDirection;
         private String windSpeed;
+        private String time;
 
         // Getters and Setters
         public double getTemperature() { return temperature; }
@@ -79,6 +80,9 @@ public class WeatherData {
 
         public String getWindSpeed() { return windSpeed; }
         public void setWindSpeed(String windSpeed) { this.windSpeed = windSpeed; }
+
+        public String getTime() { return time; }
+        public void setTime(String time) { this.time = time; }
     }
 
     public static class HourlyData {
