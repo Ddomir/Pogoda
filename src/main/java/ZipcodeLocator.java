@@ -23,6 +23,11 @@ public class ZipcodeLocator {
         private String city;
         private String stateId;
         private String countyName;
+        private String region;
+        private String gridx;
+        private String gridy;
+        private String forecastURL;
+        private String forecastHourlyURL;
 
         public Location(String zip, double lat, double lng, String city, String stateId, String countyName) {
             this.zip = zip;
@@ -33,11 +38,24 @@ public class ZipcodeLocator {
             this.countyName = countyName;
         }
 
+        public void setPointData(String region, String gridx, String gridy, String forecastURL, String forecastHourlyURL) {
+            this.region = region;
+            this.gridx = gridx;
+            this.gridy = gridy;
+            this.forecastURL = forecastURL;
+            this.forecastHourlyURL = forecastHourlyURL;
+        }
+
         public double getLat() { return lat; }
         public double getLng() { return lng; }
         public String getCity() { return city; }
         public String getStateId() { return stateId; }
         public String getCountyName() { return countyName; }
+        public String getRegion() { return region; }
+        public String getGridx() { return gridx; }
+        public String getGridy() { return gridy; }
+        public String getForecastURL() { return forecastURL; }
+        public String getForecastHourlyURL() { return forecastHourlyURL; }
     }
 
     // Method to load ZIP codes from the CSV file
@@ -72,7 +90,7 @@ public class ZipcodeLocator {
         if (location != null) {
             return location;
         } else {
-            return null; // or throw an exception if preferred
+            return null;
         }
     }
 

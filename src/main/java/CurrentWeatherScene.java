@@ -17,18 +17,25 @@ public class CurrentWeatherScene {
     public CurrentWeatherScene(Stage primaryStage) {
         Button switchToListSceneButton = new Button("List");
 
-        String Zipcode = "60018";
+        String zipcode = "60018";
 
-        // Get Data
-        ZipcodeLocator.Location location = DataFetcher.GetZipcodeData(Zipcode);
-        ArrayList<Period> DayNightForecast = DataFetcher.getDailyForecast("LOT", 77, 70);
+        WeatherData.LocationData locationData = DataFetcher.getLocationData(zipcode);
+        if (locationData != null) {
+            System.out.println("City: " + locationData.getCity());
+            System.out.println("State: " + locationData.getState());
+            System.out.println("County: " + locationData.getCounty())   ;
+            System.out.println("Region: " + locationData.getRegion());
+            System.out.println("GridX: " + locationData.getGridX());
+            System.out.println("GridY: " + locationData.getGridY());
+            System.out.println("Forecast URL: " + locationData.getForecastURL());
+            System.out.println("Hourly Forecast URL: " + locationData.getHourlyForecastURL());
+        } else {
+            System.out.println("Invalid ZIP code");
+        }
 
-        TextField coordinatesField = new TextField("Coordinates: " + location.getLat() + " " + location.getLng());
-        TextField locationField = new TextField("Location: " + location.getCity() + " " + location.getStateId());
-        TextField temperatureField = new TextField("Today's temperature is: " + DayNightForecast.get(0).temperature + "°F");
 
         // Layout
-        VBox root = new VBox(locationField, coordinatesField, temperatureField, switchToListSceneButton);
+        VBox root = new VBox(switchToListSceneButton);
 
         // Scene
         scene = new Scene(root, 700, 700);
