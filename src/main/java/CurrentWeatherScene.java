@@ -31,6 +31,16 @@ public class CurrentWeatherScene {
             System.out.println("Forecast URL: " + locationData.getForecastURL());
             System.out.println("Hourly Forecast URL: " + locationData.getHourlyForecastURL());
 
+            WeatherData.CurrentData currentData = weatherData.getCurrentData();
+            System.out.println("\nCurrent Data:");
+            System.out.println("Temperature: " + currentData.getTemperature());
+            System.out.println(currentData.getShortForecast());
+            System.out.println("Humidity: " + currentData.getHumidity());
+            System.out.println("Dewpoint: " + currentData.getDewPoint());
+            System.out.println("Wind Speed: " + currentData.getWindSpeed());
+            System.out.println("Wind Direction: " + currentData.getWindDirection());
+
+
             // Print hourly data
             System.out.println("\nHourly Data:");
             List<WeatherData.HourlyData> hourlyData = weatherData.getHourlyData();
@@ -40,7 +50,7 @@ public class CurrentWeatherScene {
             }
 
             // Print daily data
-            System.out.println("\nHourly Data:");
+            System.out.println("\nDaily Data:");
             List<WeatherData.DailyData> dailyData = weatherData.getDailyData();
             for (WeatherData.DailyData day : dailyData) {
                 System.out.println(day.getTime() + ": Day - " + day.getDayTemperature() + " F°, Night - " + day.getNightTemperature()

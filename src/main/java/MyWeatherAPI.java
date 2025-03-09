@@ -39,12 +39,6 @@ public class MyWeatherAPI {
             return null;
         }
 
-        if (response == null || response.statusCode() != 200) {
-            System.err.println("Failed to fetch point data: " +
-                    (response != null ? "Status: " + response.statusCode() + ", Body: " + response.body() : "Response was null"));
-            return null;
-        }
-
         String jsonResponse = response.body();
         return parsePointData(jsonResponse);
     }
@@ -195,7 +189,7 @@ public class MyWeatherAPI {
                 double nightTemperature = ((Number) nightPeriod.get("temperature")).doubleValue();
                 String nightForecast = (String) nightPeriod.get("shortForecast");
 
-                // Handle precipitation chance (use day period's value)
+                // Extract precipitation chance
                 JSONObject probabilityOfPrecipitation = (JSONObject) dayPeriod.get("probabilityOfPrecipitation");
                 int precipitationChance = 0; // Default to 0 if precipitation data is missing
                 if (probabilityOfPrecipitation != null) {
@@ -228,5 +222,116 @@ public class MyWeatherAPI {
         return dailyDataList;
     }
 
+    // Fetch UV index data from EPA API
+    public static int getUVIndex(String zipcode) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://data.epa.gov/efservice/getEnvirofactsUVDAILY/ZIP/" + zipcode + "/JSON"))
+                .build();
 
+        HttpResponse<String> response = null;
+        try {
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1; // Return -1 to indicate an error
+        }
+
+        String jsonResponse = response.body();
+        return parseUVIndex(jsonResponse);
+    }
+
+    // Parse UV index data from EPA API response
+    private static int parseUVIndex(String json) {
+        JSONParser parser = new JSONParser();
+
+        try {
+            JSONArray jsonArray = (JSONArray) parser.parse(json);
+            if (jsonArray.isEmpty()) {
+                System.err.println("No UV index data found for the provided ZIP code");
+                return -1;
+            }
+
+            // Get the first entry (most recent UV index)
+            JSONObject uvData = (JSONObject) jsonArray.get(0);
+            String uvIndexStr = (String) uvData.get("UV_INDEX");
+
+            // Parse the UV index as an integer
+            return Integer.parseInt(uvIndexStr);
+        } catch (ParseException e) {
+            System.err.println("Failed to parse UV index JSON response: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
+        } catch (NumberFormatException e) {
+            System.err.println("Failed to parse UV index value: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    // Fetch current hour's data
+    public static WeatherData.CurrentData getCurrentHourlyData(String hourlyURL) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(hourlyURL))
+                .build();
+
+        HttpResponse<String> response = null;
+        try {
+            response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        String jsonResponse = response.body();
+        return parseCurrentHourlyData(jsonResponse);
+    }
+
+    // Parse current hour's data
+    private static WeatherData.CurrentData parseCurrentHourlyData(String json) {
+        JSONParser parser = new JSONParser();
+        WeatherData.CurrentData currentData = new WeatherData.CurrentData();
+
+        try {
+            JSONObject jsonObject = (JSONObject) parser.parse(json);
+            JSONObject properties = (JSONObject) jsonObject.get("properties");
+            JSONArray periods = (JSONArray) properties.get("periods");
+
+            if (periods != null && !periods.isEmpty()) {
+                JSONObject firstHour = (JSONObject) periods.get(0);
+
+                // Extract temperature and short forecast
+                currentData.setTemperature(((Number) firstHour.get("temperature")).doubleValue());
+                currentData.setShortForecast((String) firstHour.get("shortForecast"));
+
+                // Extract humidity
+                JSONObject relativeHumidity = (JSONObject) firstHour.get("relativeHumidity");
+                if (relativeHumidity != null) {
+                    currentData.setHumidity(((Number) relativeHumidity.get("value")).intValue());
+                }
+
+                // Extract dew point
+                JSONObject dewpoint = (JSONObject) firstHour.get("dewpoint");
+                if (dewpoint != null) {
+                    double dewPointCelsius = ((Number) dewpoint.get("value")).doubleValue();
+                    double dewPointFahrenheit = convertCelsiusToFahrenheit(dewPointCelsius);
+                    dewPointFahrenheit = Math.round(dewPointFahrenheit * 10) / 10.0;
+                    currentData.setDewPoint(dewPointFahrenheit);
+                }
+
+                // Extract wind direction and speed
+                currentData.setWindDirection((String) firstHour.get("windDirection"));
+                currentData.setWindSpeed((String) firstHour.get("windSpeed"));
+            }
+        } catch (ParseException e) {
+            System.err.println("Failed to parse hourly JSON response: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return currentData;
+    }
+
+    // C to F (for dewpoint)
+    private static double convertCelsiusToFahrenheit(double celsius) {
+        return (celsius * 9 / 5) + 32;
+    }
 }
