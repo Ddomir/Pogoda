@@ -1,5 +1,4 @@
 import javafx.application.Application;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class JavaFX extends Application {
@@ -13,11 +12,11 @@ public class JavaFX extends Application {
 		primaryStage.setTitle("Weather App");
 
 		// Initialize scenes
-		CurrentWeatherScene currentWeatherScene = new CurrentWeatherScene(primaryStage);
-		ListWeatherScene listWeatherScene = new ListWeatherScene(primaryStage);
+		ListScene listScene = new ListScene(primaryStage);
+		CurrentWeatherScene currentWeatherScene = new CurrentWeatherScene(primaryStage, "60018");
 
 		// Set the initial scene
-		primaryStage.setScene(currentWeatherScene.getScene());
+		primaryStage.setScene(listScene.getScene());
 		primaryStage.show();
 	}
 }
