@@ -30,6 +30,7 @@ public class CurrentWeatherScene {
         // Location Data
         WeatherData.LocationData locationData = weatherData.getLocationData();
         Label locationLabel = new Label(locationData.getCity() + ", " + locationData.getState());
+        Label linkLabel = new Label(locationData.getForecastURL());
         locationLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
 
         // Current Data
@@ -65,7 +66,7 @@ public class CurrentWeatherScene {
         }
 
         // Layout
-        VBox currentDataBox = new VBox(10, locationLabel, temperatureLabel, forecastLabel, humidityLabel, dewPointLabel, windLabel);
+        VBox currentDataBox = new VBox(10, locationLabel, linkLabel, temperatureLabel, forecastLabel, humidityLabel, dewPointLabel, windLabel);
         currentDataBox.setPadding(new Insets(20));
         currentDataBox.setAlignment(Pos.TOP_LEFT);
 
