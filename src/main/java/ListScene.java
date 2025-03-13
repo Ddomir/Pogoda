@@ -1,6 +1,8 @@
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -19,8 +21,13 @@ import java.util.Objects;
 public class ListScene {
     private static Scene scene;
     private List<String> zipCodes;
+    private boolean isEditing = false;
+    private VBox locationCards;
+    private Stage primaryStage;
 
     public ListScene(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+
         // Load zip codes from file
         zipCodes = ZipcodeManager.loadZipCodes();
 
@@ -28,69 +35,250 @@ public class ListScene {
         title.getStyleClass().add("root-title");
         title.setAlignment(Pos.CENTER_LEFT);
 
-        VBox locationCards = new VBox();
+        locationCards = new VBox();
         locationCards.setSpacing(16);
 
-        // Each Location Card
+        // Create location cards for all zip codes
+        refreshLocationCards();
+
+        // Add field
+        HBox addFieldContainer = createAddFieldContainer();
+
+        // Edit button
+        VBox editButton = createEditButton(addFieldContainer);
+
+        // Layout
+        VBox root = new VBox(locationCards, editButton);
+        VBox.setVgrow(title, Priority.ALWAYS);
+        root.setSpacing(12);
+        root.setAlignment(Pos.TOP_CENTER);
+
+        VBox main = new VBox(title, root);
+        VBox.setVgrow(title, Priority.ALWAYS);
+        main.setSpacing(12);
+        main.setAlignment(Pos.TOP_LEFT);
+
+        // Scene
+        scene = new Scene(main, 402, 874);
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles/ListScene.css")).toExternalForm());
+    }
+
+    private HBox createLocationCard(String zipCode, WeatherData weatherData) {
+        WeatherData.LocationData locationData = weatherData.getLocationData();
+        WeatherData.CurrentData currentData = weatherData.getCurrentData();
+
+        HBox locationCard = new HBox();
+        locationCard.getStyleClass().add("location-card");
+        locationCard.setPrefHeight(80);
+
+        String backgroundColor = getBackgroundColorForForecast(currentData.getShortForecast());
+        String borderColor = getBorderColorForForecast(currentData.getShortForecast());
+        locationCard.setStyle(
+                "-fx-background-color: " + backgroundColor + ";" +
+                        "-fx-border-color: " + borderColor + ";" +
+                        "-fx-border-width: 1px;" +
+                        "-fx-border-radius: 15;"
+        );
+
+        VBox leftText = new VBox();
+        leftText.getStyleClass().add("left-text");
+        leftText.setAlignment(Pos.CENTER_LEFT);
+        leftText.setMinWidth(54);
+
+        Label locationLabel = new Label(locationData.getCity() + ", " + locationData.getState());
+        locationLabel.getStyleClass().add("location-label");
+        locationLabel.setAlignment(Pos.TOP_LEFT);
+
+        Label temperatureLabel = new Label(currentData.getTemperature() + " °F");
+        temperatureLabel.getStyleClass().add("temperature-label");
+        temperatureLabel.setAlignment(Pos.BOTTOM_LEFT);
+
+        leftText.getChildren().addAll(locationLabel, temperatureLabel);
+
+        ImageView weatherIcon = getWeatherIcon(currentData.getShortForecast());
+        VBox rightIcon = new VBox(weatherIcon);
+        rightIcon.setAlignment(Pos.CENTER_RIGHT);
+
+        locationCard.getChildren().addAll(leftText, rightIcon);
+        HBox.setHgrow(locationCard, Priority.ALWAYS);
+        HBox.setHgrow(leftText, Priority.ALWAYS);
+
+        // Minus Button (hidden by default)
+        ImageView minusIcon = Helpers.getIcon("minus", Color.WHITE, 34);
+        HBox removeButton = new HBox(minusIcon);
+        removeButton.getStyleClass().add("remove-button");
+        removeButton.setAlignment(Pos.CENTER);
+        removeButton.setPrefSize(34, 34);
+        removeButton.setMaxHeight(34);
+        removeButton.setVisible(isEditing);
+
+        HBox locationCardContainer = new HBox(locationCard);
+        locationCardContainer.setAlignment(Pos.CENTER);
+        HBox.setHgrow(locationCardContainer, Priority.ALWAYS);
+        locationCardContainer.setSpacing(10);
+
+        // Store the zip code in the userData property
+        locationCardContainer.setUserData(zipCode);
+
+        // Change to location weather scene
+        locationCard.setOnMouseClicked(e -> {
+            if (zipCode != null) {
+                primaryStage.setScene(new CurrentWeatherScene(primaryStage, zipCode).getScene());
+            }
+        });
+
+        // Remove button action
+        removeButton.setOnMouseClicked(e -> {
+            String zipCodeToRemove = (String) locationCardContainer.getUserData(); // Retrieve zipCode from userData
+            zipCodes.remove(zipCodeToRemove);
+            ZipcodeManager.saveZipCodes(zipCodes);
+            refreshLocationCards();
+        });
+
+        return locationCardContainer;
+    }
+
+    private HBox createAddFieldContainer() {
+        HBox addFieldContainer = new HBox();
+        addFieldContainer.getStyleClass().add("add-field-container");
+
+        TextField zipCodeField = new TextField();
+        zipCodeField.setPromptText("Enter zip code ...");
+        HBox.setHgrow(zipCodeField, Priority.ALWAYS);
+        zipCodeField.getStyleClass().add("zip-code-field");
+
+        ImageView searchIcon = Helpers.getIcon("search", Color.WHITE, 30);
+        VBox searchButton = new VBox(searchIcon);
+        searchButton.getStyleClass().add("edit-button");
+        searchButton.setAlignment(Pos.CENTER_RIGHT);
+        searchButton.setPrefSize(50, 50);
+        searchButton.setMaxSize(50, 50);
+
+        HBox searchButtonContainer = new HBox(searchButton);
+        addFieldContainer.getChildren().addAll(zipCodeField, searchButtonContainer);
+        HBox.setHgrow(addFieldContainer, Priority.ALWAYS);
+        addFieldContainer.setSpacing(16);
+
+        // Search button action
+        searchButton.setOnMouseClicked(e -> {
+            String newZipCode = zipCodeField.getText().trim();
+
+            // Validate the zip code
+            if (newZipCode.isEmpty()) {
+                showAlert("Invalid Input", "Please enter a zip code.");
+                return;
+            }
+
+            if (zipCodes.contains(newZipCode)) {
+                showAlert("Duplicate Zip Code", "This zip code is already in the list.");
+                return;
+            }
+
+            // Check if the zip code exists in the ZipcodeLocator
+            ZipcodeLocator.Location location = ZipcodeLocator.getInstance().getLocationData(newZipCode); // Use singleton
+            if (location == null) {
+                showAlert("Invalid Zip Code", "The entered zip code does not exist.");
+                return;
+            }
+
+            // Add the zip code to the list
+            zipCodes.add(newZipCode);
+            ZipcodeManager.saveZipCodes(zipCodes);
+            zipCodeField.clear();
+
+            // Refresh the UI to show the new location card
+            refreshLocationCards();
+        });
+
+        return addFieldContainer;
+    }
+
+    private VBox createEditButton(HBox addFieldContainer) {
+        ImageView editIcon = Helpers.getIcon("pencil", Color.WHITE, 30);
+        VBox editButton = new VBox(editIcon);
+        editButton.getStyleClass().add("edit-button");
+        editButton.setAlignment(Pos.CENTER);
+        editButton.setPrefSize(50, 50);
+        editButton.setMaxSize(50, 50);
+
+        editButton.setOnMouseClicked(e -> {
+            isEditing = !isEditing;
+            toggleEditMode(isEditing, addFieldContainer);
+        });
+
+        return editButton;
+    }
+
+    private void toggleEditMode(boolean isEditing, HBox addFieldContainer) {
+        // Show or hide the addFieldContainer based on edit mode
+        if (isEditing) {
+            if (!locationCards.getChildren().contains(addFieldContainer)) {
+                locationCards.getChildren().add(addFieldContainer);
+            }
+        } else {
+            locationCards.getChildren().remove(addFieldContainer);
+        }
+
+        // Show or hide minus buttons
+        for (javafx.scene.Node node : locationCards.getChildren()) {
+            if (node instanceof HBox) {
+                HBox locationCardContainer = (HBox) node;
+
+                if (locationCardContainer.getStyleClass().contains("add-field-container")) {
+                    continue;
+                }
+
+                if (isEditing) {
+                    // Add the minus button if it doesn't already exist
+                    boolean hasRemoveButton = locationCardContainer.getChildren().stream()
+                            .anyMatch(child -> child instanceof HBox && child.getStyleClass().contains("remove-button"));
+
+                    if (!hasRemoveButton) {
+                        ImageView minusIcon = Helpers.getIcon("minus", Color.WHITE, 34);
+                        HBox removeButton = new HBox(minusIcon);
+                        removeButton.getStyleClass().add("remove-button");
+                        removeButton.setAlignment(Pos.CENTER);
+                        removeButton.setPrefSize(34, 34);
+                        removeButton.setMaxHeight(34);
+
+                        // Add action to remove the location card
+                        removeButton.setOnMouseClicked(e -> {
+                            String zipCode = (String) locationCardContainer.getUserData(); // Store zipCode in userData
+                            zipCodes.remove(zipCode);
+                            ZipcodeManager.saveZipCodes(zipCodes);
+                            refreshLocationCards();
+                        });
+
+                        locationCardContainer.getChildren().add(removeButton);
+                    }
+                } else {
+                    // Remove the minus button if it exists
+                    locationCardContainer.getChildren().removeIf(child ->
+                            child instanceof HBox && child.getStyleClass().contains("remove-button")
+                    );
+                }
+            }
+        }
+    }
+
+    private void refreshLocationCards() {
+        locationCards.getChildren().clear();
+
         for (String zipCode : zipCodes) {
             WeatherData weatherData = DataFetcher.fetchWeatherData(zipCode);
             if (weatherData == null) continue;
 
-            WeatherData.LocationData locationData = weatherData.getLocationData();
-            WeatherData.CurrentData currentData = weatherData.getCurrentData();
-
-            HBox locationCard = new HBox();
-            locationCard.getStyleClass().add("location-card");
-            locationCard.setPrefHeight(80);
-
-            // Set dynamic background color based on shortForecast
-            String backgroundColor = getBackgroundColorForForecast(currentData.getShortForecast());
-            locationCard.setStyle("-fx-background-color: " + backgroundColor + ";");
-
-            // Left Text
-            VBox leftText = new VBox();
-            leftText.getStyleClass().add("left-text");
-            leftText.setAlignment(Pos.CENTER_LEFT);
-            leftText.setMinWidth(54);
-
-            Label locationLabel = new Label(locationData.getCity() + ", " + locationData.getState());
-            locationLabel.getStyleClass().add("location-label");
-            locationLabel.setAlignment(Pos.TOP_LEFT);
-
-            Label temperatureLabel = new Label(currentData.getTemperature() + " °F");
-            temperatureLabel.getStyleClass().add("temperature-label");
-            temperatureLabel.setAlignment(Pos.BOTTOM_LEFT);
-
-            leftText.getChildren().addAll(locationLabel, temperatureLabel);
-
-            // Weather Icon
-            ImageView weatherIcon = getWeatherIcon(currentData.getShortForecast());
-            VBox rightIcon = new VBox(weatherIcon);
-            rightIcon.setAlignment(Pos.CENTER_RIGHT);
-
-            // Add content to the card
-            locationCard.getChildren().addAll(leftText, rightIcon);
-            HBox.setHgrow(leftText, Priority.ALWAYS);
-
-            // Add the card to the container
+            HBox locationCard = createLocationCard(zipCode, weatherData);
             locationCards.getChildren().add(locationCard);
-
-            // Change to location weather scene
-            locationCard.setOnMouseClicked(e -> {
-                if (zipCode != null) {
-                    primaryStage.setScene(new CurrentWeatherScene(primaryStage, zipCode).getScene());
-                }
-            });
         }
+    }
 
-        // Layout
-        VBox root = new VBox(title, locationCards);
-        VBox.setVgrow(title, Priority.ALWAYS);
-        root.setSpacing(12);
-
-        // Scene
-        scene = new Scene(root, 402, 874);
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles/ListScene.css")).toExternalForm());
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private ImageView getWeatherIcon(String shortForecast) {
@@ -139,6 +327,18 @@ public class ListScene {
         }
     }
 
+    private String getBorderColorForForecast(String shortForecast) {
+        if (shortForecast.toLowerCase().contains("sunny")) {
+            return "linear-gradient(to right, #FFCA50, #FB8500)";
+        } else if (shortForecast.toLowerCase().contains("cloudy")) {
+            return "linear-gradient(to right, #D0C3D0, #998E9B)";
+        } else if (shortForecast.toLowerCase().contains("rain")) {
+            return "linear-gradient(to right, #87CEEB, #1E90FF)";
+        } else {
+            return "linear-gradient(to right, #FFCA50, #FB8500)";
+        }
+    }
+
     private Color getColorForForecast(String shortForecast) {
         if (shortForecast.toLowerCase().contains("sunny")) {
             return Color.web("#FB8500");
@@ -150,8 +350,6 @@ public class ListScene {
             return Color.web("#FB8500");
         }
     }
-
-
 
     public static Scene getScene() {
         return scene;
