@@ -1,5 +1,5 @@
 .root {
-    /* BG Imagae */
+    /* BG Image */
     -fx-background-image: url("/images/Select.png");
     -fx-background-size: cover;
     -fx-background-repeat: no-repeat;
@@ -32,11 +32,13 @@
     -fx-font-family: "Lato-Black";
     -fx-font-weight: bold;
     -fx-font-size: 24;
+    -fx-text-fill: white;
 }
 
 .temperature-label {
     -fx-font-family: "Lato-Regular";
     -fx-font-size: 20;
+    -fx-text-fill: white;
 }
 
 .edit-button {
@@ -46,10 +48,36 @@
     -fx-padding: 10;
 }
 
+.edit-button:pressed {
+    -fx-background-color: #4E4E4E;
+    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.25), 8, 0, 0, 8);
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+    -fx-transition: all 0.1s ease;
+}
+
+.edit-button:hover {
+    -fx-background-color: #3E3E3E;
+    -fx-cursor: hand;
+}
+
 .remove-button {
     -fx-background-radius: 20 20 20 20;
     -fx-background-color: #fa4c4c;
     -fx-alignment: center;
+}
+
+.remove-button:pressed {
+    -fx-background-color: #ff6b6b;
+    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.25), 8, 0, 0, 8);
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+    -fx-transition: all 0.1s ease;
+}
+
+.remove-button:hover {
+    -fx-background-color: #ff5c5c;
+    -fx-cursor: hand;
 }
 
 .zip-code-field {

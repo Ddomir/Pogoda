@@ -57,6 +57,7 @@ public class WeatherData {
         private double dewPoint;
         private String windDirection;
         private String windSpeed;
+        private boolean isDaytime;
 
         // Getters and Setters
         public double getTemperature() { return temperature; }
@@ -79,6 +80,9 @@ public class WeatherData {
 
         public String getWindSpeed() { return windSpeed; }
         public void setWindSpeed(String windSpeed) { this.windSpeed = windSpeed; }
+
+        public boolean getIsDaytime() { return isDaytime; }
+        public void setIsDaytime(boolean isDaytime) { this.isDaytime = isDaytime; }
     }
 
     public static class HourlyData {
@@ -86,6 +90,7 @@ public class WeatherData {
         private double temperature;
         private String shortForecast;
         private int precipitationChance;
+        private boolean isDaytime;
 
         // Getters and Setters
         public String getTime() { return time; }
@@ -99,6 +104,9 @@ public class WeatherData {
 
         public int getPrecipitationChance() { return precipitationChance; }
         public void setPrecipitationChance(int precipitationChance) { this.precipitationChance = precipitationChance; }
+
+        public boolean getIsDaytime() { return isDaytime; }
+        public void setIsDaytime(boolean isDaytime) { this.isDaytime = isDaytime; }
     }
 
     public static class DailyData {
@@ -107,6 +115,7 @@ public class WeatherData {
         private double nightTemperature;
         private int precipitationChance;
         private String shortForecast;
+        private String detailedForecast;
 
         // Getters and Setters
         public String getTime() { return date; }
@@ -123,6 +132,10 @@ public class WeatherData {
 
         public String getShortForecast() { return shortForecast; }
         public void setShortForecast(String shortForecast) { this.shortForecast = shortForecast; }
+
+        public String getDetailedForecast() { return detailedForecast; }
+        public void setDetailedForecast(String detailedForecast) { this.detailedForecast = detailedForecast; }
+
     }
 
     private LocationData locationData;

@@ -107,6 +107,7 @@ public class MyWeatherAPI {
                 String startTime = (String) period.get("startTime");
                 double temperature = ((Number) period.get("temperature")).doubleValue();
                 String shortForecast = (String) period.get("shortForecast");
+                boolean isDaytime = (boolean) period.get("isDaytime");
 
                 // Handle nested "probabilityOfPrecipitation"
                 JSONObject probabilityOfPrecipitation = (JSONObject) period.get("probabilityOfPrecipitation");
@@ -124,6 +125,7 @@ public class MyWeatherAPI {
                 hourlyData.setTemperature(temperature);
                 hourlyData.setShortForecast(shortForecast);
                 hourlyData.setPrecipitationChance(precipitationChance);
+                hourlyData.setIsDaytime(isDaytime);
 
                 hourlyDataList.add(hourlyData);
 
@@ -184,6 +186,7 @@ public class MyWeatherAPI {
                 String date = ((String) dayPeriod.get("startTime")).split("T")[0]; // Extract date (YYYY-MM-DD)
                 double dayTemperature = ((Number) dayPeriod.get("temperature")).doubleValue();
                 String dayForecast = (String) dayPeriod.get("shortForecast");
+                String dayDetailedForecast = (String) dayPeriod.get("detailedForecast");
 
                 // Extract night data
                 double nightTemperature = ((Number) nightPeriod.get("temperature")).doubleValue();
@@ -206,6 +209,7 @@ public class MyWeatherAPI {
                 dailyData.setNightTemperature(nightTemperature);
                 dailyData.setPrecipitationChance(precipitationChance);
                 dailyData.setShortForecast(dayForecast + " / " + nightForecast);
+                dailyData.setDetailedForecast(dayDetailedForecast);
 
                 dailyDataList.add(dailyData);
 
@@ -302,6 +306,7 @@ public class MyWeatherAPI {
                 // Extract temperature and short forecast
                 currentData.setTemperature(((Number) firstHour.get("temperature")).doubleValue());
                 currentData.setShortForecast((String) firstHour.get("shortForecast"));
+                currentData.setIsDaytime((boolean) firstHour.get("isDaytime"));
 
                 // Extract humidity
                 JSONObject relativeHumidity = (JSONObject) firstHour.get("relativeHumidity");

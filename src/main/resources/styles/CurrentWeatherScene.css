@@ -1,0 +1,91 @@
+.root {
+    /* BG Image */
+    -fx-background-size: cover;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+
+    -fx-padding: 44 28 0 28;
+}
+
+.location {
+    -fx-font-size: 20;
+    -fx-font-family: "Lato Regular";
+    -fx-text-fill: rgba(255, 255, 255, 0.75);
+}
+
+.temperature-main {
+    -fx-font-family: "Lato Black";
+    -fx-text-fill: white;
+    -fx-font-size: 64;
+    -fx-font-weight: bold;
+}
+
+.time-select-label {
+    -fx-font-family: "Lato Regular";
+    -fx-text-fill: white;
+    -fx-font-size: 16;
+}
+
+.time-select-active {
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.75));
+    -fx-border-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 1.0), rgba(255, 255, 255, 0.5));
+    -fx-border-width: 1px;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 15, 0, 0, 4);
+}
+
+.time-select-inactive {
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.45));
+    -fx-border-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.35));
+    -fx-border-width: 1px;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 15, 0, 0, 4);
+}
+
+.box {
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+    -fx-border-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.35));
+    -fx-padding: 14 12 14 12;
+}
+
+.forecast-description {
+    -fx-font-family: "Lato regular";
+    -fx-text-fill: white;
+    -fx-font-size: 16;
+}
+
+.card-title {
+    -fx-font-family: "Lato Regular";
+    -fx-text-fill: white;
+    -fx-font-size: 20;
+}
+
+.hours-text {
+    -fx-font-family: "Lato Regular";
+    -fx-text-fill: white;
+    -fx-font-size: 20;
+    -fx-font-weight: bold;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.xaxis-text {
+    -fx-font-family: "Lato Regular";
+    -fx-text-fill: rgba(255, 255, 255, 0.75);
+    -fx-font-size: 16;
+}
