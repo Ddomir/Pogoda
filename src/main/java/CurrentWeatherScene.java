@@ -375,42 +375,25 @@ public class CurrentWeatherScene {
     }
 
     private ImageView getWeatherIcon(String shortForecast, int size, boolean isDaytime) {
-        String iconPath = "/icons/";
-        boolean isNightTime = !(isDaytime);
+        String iconPath = "";
 
         if (shortForecast.toLowerCase().contains("sunny")) {
-            iconPath += isDaytime ? "sun.png" : "moon.png";
+            iconPath += isDaytime ? "sun" : "moon";
         } else if (shortForecast.toLowerCase().contains("cloudy")) {
-            iconPath += isDaytime ? "cloudy.png" : "cloud-moon.png";
+            iconPath += isDaytime ? "cloudy" : "cloud-moon";
         } else if (shortForecast.toLowerCase().contains("rain")) {
-            iconPath += "cloud-rain.png";
+            iconPath += "cloud-rain";
         } else if (shortForecast.toLowerCase().contains("snow")) {
-            iconPath += "cloud-snow.png";
+            iconPath += "cloud-snow";
         } else {
-            iconPath += isNightTime ? "moon.png" : "sun.png";
+            iconPath += isDaytime ? "sun" : "moon";
         }
 
-        ImageView iconView = new ImageView(new Image(iconPath));
-        iconView.setFitWidth(size);
-        iconView.setFitHeight(size);
-        iconView.setPreserveRatio(true);
-
-        // Adjust icon color based on forecast
-        ColorAdjust colorAdjust = new ColorAdjust();
-        colorAdjust.setBrightness(1);
-        InnerShadow colorOverlay = new InnerShadow();
-        colorOverlay.setColor(getColorForForecast(shortForecast));
-        colorOverlay.setRadius(100);
-        colorOverlay.setChoke(1);
-        Blend blend = new Blend(BlendMode.SRC_ATOP);
-        blend.setTopInput(colorOverlay);
-        blend.setBottomInput(colorAdjust);
-        iconView.setEffect(blend);
-
-        return iconView;
+        return Helpers.getIcon(iconPath, Color.WHITE, size);
     }
 
     private void setBackground(VBox root, boolean isDaytime) {
+        System.out.println(isDaytime);
         if (isDaytime) {
             root.setStyle("-fx-background-image: url('/images/SunnyDay.png');");
         } else {

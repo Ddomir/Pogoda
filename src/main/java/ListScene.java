@@ -282,48 +282,33 @@ public class ListScene {
     }
 
     private ImageView getWeatherIcon(String shortForecast, int size, boolean isDaytime) {
-        String iconPath = "/icons/";
-        boolean isNightTime = !(isDaytime);
+        String iconPath = "";
 
         if (shortForecast.toLowerCase().contains("sunny")) {
-            iconPath += isDaytime ? "sun.png" : "moon.png";
+            iconPath += isDaytime ? "sun" : "moon";
         } else if (shortForecast.toLowerCase().contains("cloudy")) {
-            iconPath += isDaytime ? "cloudy.png" : "cloud-moon.png";
+            iconPath += isDaytime ? "cloudy" : "cloud-moon";
         } else if (shortForecast.toLowerCase().contains("rain")) {
-            iconPath += "cloud-rain.png";
+            iconPath += "cloud-rain";
         } else if (shortForecast.toLowerCase().contains("snow")) {
-            iconPath += "cloud-snow.png";
+            iconPath += "cloud-snow";
         } else {
-            iconPath += isNightTime ? "moon.png" : "sun.png";
+            iconPath += isDaytime ? "sun" : "moon";
         }
 
-        ImageView iconView = new ImageView(new Image(iconPath));
-        iconView.setFitWidth(size);
-        iconView.setFitHeight(size);
-        iconView.setPreserveRatio(true);
-
-        // Adjust icon color based on forecast
-        ColorAdjust colorAdjust = new ColorAdjust();
-        colorAdjust.setBrightness(1);
-        InnerShadow colorOverlay = new InnerShadow();
-        colorOverlay.setColor(getColorForForecast(shortForecast, isDaytime));
-        colorOverlay.setRadius(100);
-        colorOverlay.setChoke(1);
-        Blend blend = new Blend(BlendMode.SRC_ATOP);
-        blend.setTopInput(colorOverlay);
-        blend.setBottomInput(colorAdjust);
-        iconView.setEffect(blend);
-
-        return iconView;
+        return Helpers.getIcon(iconPath, Color.WHITE, size);
     }
 
     private String getBackgroundColorForForecast(String shortForecast, boolean isDaytime) {
+        System.out.println(shortForecast + isDaytime);
         if (shortForecast.toLowerCase().contains("sunny") || shortForecast.toLowerCase().contains("clear")) {
             return isDaytime ? "linear-gradient(to right, #FB8500 0%, #FFCA50 80%)" : "linear-gradient(to right, #683B99 0%, #C766FF 80%)";
         } else if (shortForecast.toLowerCase().contains("cloudy")) {
             return "linear-gradient(to right, #998E9B 0%, #D0C3D0 80%)";
         } else if (shortForecast.toLowerCase().contains("rain")) {
             return "linear-gradient(to right, #1E90FF 0%, #87CEEB 80%)";
+        } else if (shortForecast.toLowerCase().contains("snow")) {
+            return "linear-gradient(to right, #828CC1 0%, #C9D0F4 80%)";
         } else {
             return "linear-gradient(to right, #FB8500 0%, #FFCA50 80%)";
         }
@@ -336,16 +321,10 @@ public class ListScene {
             return "linear-gradient(to right, #D0C3D0, #998E9B)";
         } else if (shortForecast.toLowerCase().contains("rain")) {
             return "linear-gradient(to right, #87CEEB, #1E90FF)";
+        } else if (shortForecast.toLowerCase().contains("snow")) {
+            return "linear-gradient(to right, #C9D0F4 0%, #828CC1 80%)";
         } else {
             return "linear-gradient(to right, #FFCA50, #FB8500)";
-        }
-    }
-
-    private Color getColorForForecast(String shortForecast, boolean isDaytime) {
-        if (shortForecast.toLowerCase().contains("sunny") || shortForecast.toLowerCase().contains("clear")) {
-            return isDaytime ? Color.web("#FFE32C") : Color.web("#683B99");
-        } else {
-            return Color.web("#FFFFFF");
         }
     }
 

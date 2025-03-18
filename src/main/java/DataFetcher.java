@@ -100,6 +100,7 @@ public class DataFetcher {
             WeatherData.HourlyData firstHour = hourlyData.get(0);
             currentData.setTemperature(firstHour.getTemperature());
             currentData.setShortForecast(firstHour.getShortForecast());
+            currentData.setIsDaytime(firstHour.getIsDaytime());
         }
 
         // Fetch UV index from EPA API
