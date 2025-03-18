@@ -351,6 +351,7 @@ public class CurrentWeatherScene {
         chartPane.prefWidthProperty().bind(xaxis.widthProperty());
         HBox chartContainer = new HBox(chartPane);
         chartContainer.setAlignment(Pos.CENTER);
+        chartContainer.setPadding(new Insets(0, 0, 0, 8));
 
         VBox graphGroup = new VBox(chartContainer, xaxis);
         VBox.setVgrow(graphGroup, Priority.ALWAYS);
