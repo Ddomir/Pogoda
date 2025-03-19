@@ -4,7 +4,7 @@
     -fx-background-repeat: no-repeat;
     -fx-background-position: center;
 
-    -fx-padding: 44 28 0 28;
+    -fx-padding: 44 26 0 26;
 }
 
 .location {
@@ -90,6 +90,12 @@
     -fx-font-size: 16;
 }
 
+.normal-text {
+    -fx-font-family: "Lato", sans-serif;
+    -fx-text-fill: white;
+    -fx-font-size: 20;
+}
+
 .big-text {
     -fx-text-fill: white;
     -fx-alignment: center-left;
@@ -114,3 +120,24 @@
     -fx-background-radius: 15;
     -fx-border-radius: 15;
 }
+
+.speed-text {
+    -fx-font-family: "Lato", sans-serif;
+    -fx-text-fill: white;
+    -fx-font-size: 24;
+    -fx-font-weight: bold;
+}
+
+.gray-bar {
+    -fx-background-color: rgba(0, 0, 0, 0.25);
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+}
+
+.temp-bar {
+    -fx-background-color: linear-gradient(to right, #7BD3FF, #A3E5FF, #FFFA69);
+    -fx-background-radius: 15;
+}
+
+
+

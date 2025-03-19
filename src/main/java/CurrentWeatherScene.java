@@ -17,12 +17,18 @@ import javafx.scene.shape.CubicCurveTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class CurrentWeatherScene {
     private static Scene scene;
-    private final Stage primaryStage; // Store primaryStage for access
+    private final Stage primaryStage;
+    private ScrollPane scrollableCards;
+    private VBox todayInfoCards;
+    private VBox weeklyInfoCards;
 
     public CurrentWeatherScene(Stage primaryStage, String zipcode) {
         this.primaryStage = primaryStage;
@@ -40,15 +46,18 @@ public class CurrentWeatherScene {
 
         VBox topInfo = createTopInfo(locationData.getCity(), locationData.getState(), currentData.getTemperature(), currentData.getShortForecast(), currentData.getIsDaytime());
 
-        HBox timeSelector = createTimeSelector();
+        this.todayInfoCards = createTodayInfoCards(dailyData.get(0).getDetailedForecast(), hourlyData, currentData);
 
-        VBox todayInfoCards = createTodayInfoCards(dailyData.get(0).getDetailedForecast(), hourlyData, currentData);
-        ScrollPane scrollableCards = new ScrollPane(todayInfoCards);
+        this.weeklyInfoCards = createWeeklyInfoCards(dailyData);
+
+        this.scrollableCards = new ScrollPane(todayInfoCards);
         scrollableCards.setMinHeight(648);
         scrollableCards.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollableCards.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollableCards.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-padding: 0 0 0 0;");
+        scrollableCards.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
         scrollableCards.setFitToWidth(true);
+
+        HBox timeSelector = createTimeSelector();
 
         // Root container
         VBox root = new VBox(topInfo, timeSelector, scrollableCards);
@@ -123,7 +132,25 @@ public class CurrentWeatherScene {
         HBox.setHgrow(timeSelector, Priority.ALWAYS);
         timeSelector.setMaxHeight(35);
 
+        today.setOnMouseClicked(e -> {
+            scrollableCards.setContent(todayInfoCards);
+            setActive(today, week);
+        });
+
+        week.setOnMouseClicked(e -> {
+            scrollableCards.setContent(weeklyInfoCards);
+            setActive(week, today);
+        });
+
         return timeSelector;
+    }
+
+    private void setActive(HBox active, HBox inactive) {
+        active.getStyleClass().clear();
+        active.getStyleClass().add("time-select-active");
+
+        inactive.getStyleClass().clear();
+        inactive.getStyleClass().add("time-select-inactive");
     }
 
     private VBox createBox(VBox content) {
@@ -143,9 +170,10 @@ public class CurrentWeatherScene {
         HBox humidityAndUV = new HBox(createHumidity(currentData.getHumidity(), currentData.getDewPoint()), createUV(currentData.getUvIndex()));
         humidityAndUV.setSpacing(22);
 
-        HBox realFeelAndWind = new HBox(createRealFeel(currentData));
+        HBox realFeelAndWind = new HBox(createRealFeel(currentData), createWind(currentData));
+        realFeelAndWind.setSpacing(22);
 
-        VBox main = new VBox(todayDescription, hourlyTemperature, hourlyPrecipitation, humidityAndUV, realFeelAndWind);
+        VBox main = new VBox(todayDescription, hourlyTemperature, hourlyPrecipitation, humidityAndUV, realFeelAndWind, makeSpacing());
         main.setSpacing(10);
         return main;
     }
@@ -170,12 +198,10 @@ public class CurrentWeatherScene {
         titleBox.setSpacing(5);
         titleBox.setOpacity(0.75);
 
-        // Create the container for hour cards
         HBox hourCards = new HBox();
         hourCards.setAlignment(Pos.TOP_LEFT);
         hourCards.setSpacing(14);
 
-        // Add hour cards to the HBox
         for (WeatherData.HourlyData h : hourlyData) {
             Label time = new Label(h.getTime());
             time.setMinWidth(52);
@@ -191,7 +217,6 @@ public class CurrentWeatherScene {
             hourCards.getChildren().add(hourCard);
         }
 
-        // Create a ScrollPane and configure it
         ScrollPane hourCardsContainer = new ScrollPane(hourCards);
         hourCardsContainer.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         hourCardsContainer.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -201,7 +226,6 @@ public class CurrentWeatherScene {
 
         hourCards.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Wrap the ScrollPane in a VBox with the title
         VBox main = new VBox(titleBox, hourCardsContainer);
         main.setSpacing(10);
 
@@ -216,7 +240,6 @@ public class CurrentWeatherScene {
         titleBox.setSpacing(5);
         titleBox.setOpacity(0.75);
 
-        // Custom X-axis labels (every other hour)
         Label hr1 = new Label(hourlyData.get(0).getTime());
         Label hr2 = new Label(hourlyData.get(2).getTime());
         Label hr3 = new Label(hourlyData.get(4).getTime());
@@ -248,14 +271,9 @@ public class CurrentWeatherScene {
         HBox.setHgrow(xaxis, Priority.ALWAYS);
         xaxis.setMaxWidth(Double.MAX_VALUE);
 
-
-        Pane chartPane = new Pane();
-        chartPane.setMinHeight(125);
-        chartPane.setPrefHeight(125);
         double[] xData = new double[7];
         double[] yData = new double[7];
 
-        // Find the highest precipitation chance
         double highestChance = 0;
         int highestIndex = 0;
 
@@ -271,18 +289,38 @@ public class CurrentWeatherScene {
 
         // Skip showing the graph if all values are too low
         if (highestChance < 5) {
-            Label noRainLabel = new Label("No significant precipitation expected");
+            Label noRainLabel = new Label("No significant precipitation expected.");
             noRainLabel.getStyleClass().add("forecast-description");
             VBox main = new VBox(titleBox, noRainLabel);
             main.setSpacing(12);
             return createBox(main);
         }
-        double[] scaledY = new double[7];
-        for (int i = 0; i < yData.length; i++) {
-            scaledY[i] = 150 - (yData[i] / 100.0 * 125);
+
+        int chartHeight;
+        if (highestChance < 15) {
+            chartHeight = 60;
+        } else if (highestChance < 30) {
+            chartHeight = 70;
+        } else if (highestChance < 50) {
+            chartHeight = 80;
+        } else {
+            chartHeight = 90;
         }
 
-        // Create a Path for curve
+        Pane chartPane = new Pane();
+        chartPane.setMinHeight(chartHeight);
+        chartPane.setPrefHeight(chartHeight);
+        chartPane.setMaxHeight(chartHeight);
+        chartPane.setClip(new Rectangle(0, 0, 300, chartHeight));
+
+        double[] scaledY = new double[7];
+        double verticalMargin = 10;
+        double usableHeight = chartHeight - verticalMargin - 5;
+
+        for (int i = 0; i < yData.length; i++) {
+            scaledY[i] = verticalMargin + (1 - (yData[i] / 100.0)) * usableHeight;
+        }
+
         Path curvePath = new Path();
 
         MoveTo moveTo = new MoveTo(xData[0], scaledY[0]);
@@ -295,7 +333,6 @@ public class CurrentWeatherScene {
             double x2 = xData[i + 1];
             double y2 = scaledY[i + 1];
 
-            // Calculate control points for smoother curve
             double controlX1 = x1 + (x2 - x1) / 2;
             double controlY1 = y1;
             double controlX2 = x1 + (x2 - x1) / 2;
@@ -337,22 +374,22 @@ public class CurrentWeatherScene {
             fillPath.getElements().add(cubicCurveTo);
         }
 
-        fillPath.getElements().add(new LineTo(xData[xData.length - 1], 125));
-        fillPath.getElements().add(new LineTo(xData[0], 150));
+        fillPath.getElements().add(new LineTo(xData[xData.length - 1], chartHeight));
+        fillPath.getElements().add(new LineTo(xData[0], chartHeight));
         fillPath.getElements().add(new LineTo(xData[0], scaledY[0]));
 
-        // Create gradient fill
         Stop[] stops = new Stop[] {
                 new Stop(0.25, Color.rgb(255, 255, 255, 0.5)),
                 new Stop(1, Color.rgb(255, 255, 255, 0))
         };
-        LinearGradient gradient = new LinearGradient(0, 0, 0, 125, false, CycleMethod.NO_CYCLE, stops);
+        LinearGradient gradient = new LinearGradient(0, 0, 0, chartHeight, false, CycleMethod.NO_CYCLE, stops);
         fillPath.setFill(gradient);
         fillPath.setStroke(Color.TRANSPARENT);
         chartPane.getChildren().add(fillPath);
         chartPane.getChildren().add(curvePath);
+
         if (highestChance >= 5) {
-            Text text = new Text(xData[highestIndex], scaledY[highestIndex] - 15,
+            Text text = new Text(xData[highestIndex], Math.max(scaledY[highestIndex] - 10, 15),
                     String.format("%.0f%%", highestChance));
             text.setFill(Color.WHITE);
             text.setTextOrigin(VPos.CENTER);
@@ -363,13 +400,17 @@ public class CurrentWeatherScene {
 
         chartPane.setMaxWidth(Double.MAX_VALUE);
         chartPane.prefWidthProperty().bind(xaxis.widthProperty());
+
         HBox chartContainer = new HBox(chartPane);
         chartContainer.setAlignment(Pos.CENTER);
-        chartContainer.setPadding(new Insets(0, 0, 0, 8));
+        chartContainer.setPadding(new Insets(5, 8, 0, 8));
+        chartContainer.setMinHeight(chartHeight + 5);
+        chartContainer.setMaxHeight(chartHeight + 5);
 
         VBox graphGroup = new VBox(chartContainer, xaxis);
         VBox.setVgrow(graphGroup, Priority.ALWAYS);
         graphGroup.setAlignment(Pos.CENTER);
+        graphGroup.setSpacing(3);
 
         VBox main = new VBox(titleBox, graphGroup);
         main.setSpacing(10);
@@ -409,7 +450,6 @@ public class CurrentWeatherScene {
 
         return createBox(main);
     }
-
 
     private VBox createUV(int UV) {
         ImageView rainIcon = Helpers.getIcon("sun", Color.WHITE, 20);
@@ -461,7 +501,7 @@ public class CurrentWeatherScene {
         Pane overlay = new Pane(uvIndicator);
         overlay.setMinWidth(uvBar.getMinWidth());
         overlay.setMinHeight(uvBar.getMinHeight());
-        uvIndicator.setTranslateX(circleX);
+        uvIndicator.setTranslateX(circleX + 2);
         uvIndicator.setTranslateY(6);
 
         // Stack both together
@@ -487,31 +527,78 @@ public class CurrentWeatherScene {
 
         int realFeel = Helpers.calculateRealFeel(currentData.getTemperature(), currentData.getHumidity(), currentData.getDewPoint(), currentData.getWindSpeed());
 
-        Label humidityLabel = new Label("" + realFeel);
+        Label humidityLabel = new Label("" + realFeel + " F°");
         humidityLabel.getStyleClass().add("big-text");
 
         VBox topContent = new VBox(titleBox, humidityLabel);
-        VBox.setVgrow(topContent, Priority.ALWAYS);
+        topContent.setAlignment(Pos.TOP_LEFT);
+        VBox.setVgrow(topContent, Priority.NEVER);
 
         Label realFeelDesc = new Label(Math.abs(realFeel - currentData.getTemperature()) + "° " + ((realFeel-currentData.getTemperature() < 0) ? "below" : "above") + " the real temperature.");
         realFeelDesc.getStyleClass().add("subtext");
+        realFeelDesc.setWrapText(true);
 
         VBox bottomContent = new VBox(realFeelDesc);
+        bottomContent.setAlignment(Pos.BOTTOM_LEFT);
+        bottomContent.setMinHeight(Region.USE_PREF_SIZE);
+        VBox.setVgrow(bottomContent, Priority.ALWAYS);
 
         VBox main = new VBox(topContent, bottomContent);
+        main.setSpacing(10);
+        main.setMinHeight(137);
+        main.setMinWidth(137);
+        return createBox(main);
+    }
+
+    private VBox createWind(WeatherData.CurrentData currentData) {
+        ImageView tempIcon = Helpers.getIcon("wind", Color.WHITE, 20);
+        Label boxTitle = new Label("Wind");
+        boxTitle.getStyleClass().add("card-title");
+        HBox titleBox = new HBox(tempIcon, boxTitle);
+        titleBox.setSpacing(5);
+        titleBox.setOpacity(0.75);
+
+        ImageView direction = Helpers.getIcon("circle-arrow-out-up-right", Color.WHITE, 50);
+        direction.setRotate(getIconWindRot(currentData.getWindDirection()));
+
+        Label direcLabel = new Label(getFullWindDirection(currentData.getWindDirection()));
+        direcLabel.getStyleClass().add("forecast-description");
+        direcLabel.setWrapText(true);
+
+        HBox middleContent = new HBox(direction, direcLabel);
+        middleContent.setAlignment(Pos.CENTER_LEFT);
+        middleContent.setSpacing(10);
+
+        VBox topContent = new VBox(titleBox, middleContent);
+        topContent.setSpacing(8);
+        topContent.setAlignment(Pos.TOP_LEFT);
+        VBox.setVgrow(topContent, Priority.NEVER);
+
+        String[] parts = currentData.getWindSpeed().split(" ");
+        String speed = parts[0];
+        Label speedLabel = new Label(speed + " ");
+        speedLabel.getStyleClass().add("speed-text");
+        Label mphLabel = new Label(parts[1] + " winds.");
+        mphLabel.getStyleClass().add("subtext");
+
+        HBox bottomContent = new HBox(speedLabel, mphLabel);
+        bottomContent.setAlignment(Pos.BOTTOM_LEFT);
+        bottomContent.setMinHeight(Region.USE_PREF_SIZE);
+        VBox.setVgrow(bottomContent, Priority.ALWAYS);
+
+        VBox main = new VBox(topContent, bottomContent);
+        main.setSpacing(10);
+        main.setMinHeight(137);
+        main.setMinWidth(137);
 
         return createBox(main);
-
-
     }
 
     private Color getColorForForecast(String shortForecast) {
-        if (shortForecast.toLowerCase().contains("sunny")) {
-            return Color.web("#FFE32C");
-        } else if (shortForecast.toLowerCase().contains("clear")) {
-            return Color.web("#FFE32C");
-        } else {
+        if (!shortForecast.toLowerCase().contains("sunny") || !shortForecast.toLowerCase().contains("clear")) {
             return Color.web("#FFFFFF");
+        } else {
+            return Color.web("#FFE32C");
         }
     }
 
@@ -542,7 +629,168 @@ public class CurrentWeatherScene {
         }
     }
 
+    private int getIconWindRot(String windDirection) {
+        switch (windDirection) {
+            case "N":    return -45;
+            case "NNE":  return -22;
+            case "NE":   return 0;
+            case "ENE":  return 22;
+            case "E":    return 45;
+            case "ESE":  return 67;
+            case "SE":   return 90;
+            case "SSE":  return 112;
+            case "S":    return 135;
+            case "SSW":  return 157;
+            case "SW":   return 180;
+            case "WSW":  return 202;
+            case "W":    return 225;
+            case "WNW":  return 247;
+            case "NW":   return 270;
+            case "NNW":  return 292;
+            default:     return -45;
+        }
+    }
 
+    private String getFullWindDirection(String windDirection) {
+        switch (windDirection) {
+            case "N":    return "North";
+            case "NNE":  return "North Northeast";
+            case "NE":   return "Northeast";
+            case "ENE":  return "East Northeast";
+            case "E":    return "East";
+            case "ESE":  return "East Southeast";
+            case "SE":   return "Southeast";
+            case "SSE":  return "South Southeast";
+            case "S":    return "South";
+            case "SSW":  return "South Southwest";
+            case "SW":   return "Southwest";
+            case "WSW":  return "West Southwest";
+            case "W":    return "West";
+            case "WNW":  return "West Northwest";
+            case "NW":   return "Northwest";
+            case "NNW":  return "North Northwest";
+            default:     return "Unknown";
+        }
+    }
+
+    private VBox createWeeklyInfoCards(List<WeatherData.DailyData> dailyData) {
+        return create7DayForecast(dailyData);
+    }
+
+    private VBox create7DayForecast(List<WeatherData.DailyData> dailyData) {
+        ImageView calIcon = Helpers.getIcon("calendar-days", Color.WHITE, 20);
+        Label boxTitle = new Label("7 Day Forecast");
+        boxTitle.getStyleClass().add("card-title");
+        HBox titleBox = new HBox(calIcon, boxTitle);
+        titleBox.setSpacing(5);
+        titleBox.setOpacity(0.75);
+
+        VBox dayRows = new VBox();
+        dayRows.setSpacing(4);
+
+        // for bar boundaries
+        int[] minMax = getMinMax(dailyData);
+        int min = minMax[0];
+        int max = minMax[1];
+        int range = max - min;
+
+        for (WeatherData.DailyData day : dailyData) {
+            int low = (int) Math.round(day.getNightTemperature());
+            int high = (int) Math.round(day.getDayTemperature());
+
+            // Day name and icon
+            Label dayLabel = new Label(Helpers.getDayName(day.getTime()));
+            dayLabel.getStyleClass().add("normal-text");
+            dayLabel.setMinWidth(55);
+            dayLabel.setAlignment(Pos.CENTER_LEFT);
+            HBox dayIcon = new HBox(getWeatherIcon(day.getShortForecast(), 20, true), dayLabel);
+            dayIcon.setAlignment(Pos.CENTER_LEFT);
+            dayIcon.setSpacing(5);
+            HBox.setHgrow(dayIcon, Priority.ALWAYS);
+
+            // Weather bar and temps
+            Label lowLabel = new Label(String.valueOf(low));
+            Label highLabel = new Label(String.valueOf(high));
+            lowLabel.getStyleClass().add("normal-text");
+            lowLabel.setOpacity(0.75);
+            highLabel.getStyleClass().add("normal-text");
+            lowLabel.setMinWidth(40);
+            highLabel.setMinWidth(40);
+            lowLabel.setAlignment(Pos.CENTER);
+            highLabel.setAlignment(Pos.CENTER);
+
+            // Bar positioning
+            double lowPos = ((double) (low - min) / range) * 100;
+            double highPos = ((double) (high - min) / range) * 100;
+            double barWidth = highPos - lowPos;
+
+            // Gray background bar (full width)
+            Region grayBar = new Region();
+            grayBar.setMinWidth(156);
+            grayBar.setMaxWidth(156);
+            grayBar.setMinHeight(6);
+            grayBar.setMaxHeight(6);
+            grayBar.getStyleClass().add("gray-bar");
+
+            // Colored Bar (full width)
+            Region tempBar = new Region();
+            tempBar.setMinWidth(156);
+            tempBar.setMaxWidth(156);
+            tempBar.setMinHeight(6);
+            tempBar.setMaxHeight(6);
+            tempBar.getStyleClass().add("temp-bar");
+
+            // Create a clip for the colored bar
+            Rectangle clip = new Rectangle();
+            clip.setWidth(barWidth * 1.56);
+            clip.setHeight(6);
+            clip.setX(lowPos * 1.56);
+            tempBar.setClip(clip);
+            clip.setArcHeight(10);
+            clip.setArcWidth(10);
+
+            // Position the colored bar within the gray bar
+            StackPane barContainer = new StackPane();
+            barContainer.setMinWidth(156);
+            barContainer.setMaxWidth(156);
+            barContainer.setMinHeight(6);
+            barContainer.setMaxHeight(6);
+            barContainer.getChildren().addAll(grayBar, tempBar);
+
+            HBox tempBarComponent = new HBox(lowLabel, barContainer, highLabel);
+            tempBarComponent.setAlignment(Pos.CENTER_RIGHT);
+
+            // Row layout
+            HBox row = new HBox(dayIcon, tempBarComponent);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setSpacing(2);
+            dayRows.getChildren().add(row);
+        }
+        VBox main = new VBox(titleBox, dayRows);
+        main.setSpacing(5);
+        return createBox(main);
+    }
+
+    private Region makeSpacing() {
+        Region region = new Region();
+        region.setMinHeight(200);
+        region.setStyle("-fx-background-color: rgba(255, 255, 255, 0);");
+        return region;
+    }
+
+    private int[] getMinMax(List<WeatherData.DailyData> dailyData) {
+        List<Double> temps = new ArrayList<>();
+        for (WeatherData.DailyData day : dailyData) {
+            temps.add(day.getDayTemperature());
+            temps.add(day.getNightTemperature());
+        }
+
+        int[] tempArray = temps.stream().mapToInt(Double::intValue).toArray();
+        int min = Arrays.stream(tempArray).min().orElse(Integer.MAX_VALUE);
+        int max = Arrays.stream(tempArray).max().orElse(Integer.MIN_VALUE);
+
+        return new int[]{min, max};
+    }
 
     public static Scene getScene() {
         return scene;

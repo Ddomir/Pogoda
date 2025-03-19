@@ -6,6 +6,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.Locale;
+
 public class Helpers {
     public static ImageView getIcon(String filename, Color color, int size) {
         String iconPath = "/icons/" + filename + ".png";
@@ -71,5 +76,15 @@ public class Helpers {
                 0.4275 * T * Math.pow(V, 0.16);
 
         return windChill;
+    }
+
+    public static String getDayName(String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate today = LocalDate.now();
+        if (date.equals(today)) {
+            return "Today";
+        } else {
+            return date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+        }
     }
 }
