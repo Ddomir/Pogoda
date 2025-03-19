@@ -42,10 +42,17 @@ public class CurrentWeatherScene {
 
         HBox timeSelector = createTimeSelector();
 
-       VBox todayInfoCards = createTodayInfoCards(dailyData.get(0).getDetailedForecast(), hourlyData);
+        VBox todayInfoCards = createTodayInfoCards(dailyData.get(0).getDetailedForecast(), hourlyData, currentData);
+        ScrollPane scrollableCards = new ScrollPane(todayInfoCards);
+        scrollableCards.setMinHeight(648);
+        scrollableCards.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollableCards.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollableCards.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-padding: 0 0 0 0;");
+        scrollableCards.setFitToWidth(true);
 
         // Root container
-        VBox root = new VBox(topInfo, timeSelector, todayInfoCards);
+        VBox root = new VBox(topInfo, timeSelector, scrollableCards);
+        VBox.setVgrow(scrollableCards, Priority.ALWAYS);
         root.setSpacing(20);
         root.setAlignment(Pos.TOP_CENTER);
         setBackground(root, currentData.getIsDaytime());
@@ -126,12 +133,19 @@ public class CurrentWeatherScene {
         return box;
     }
 
-    private VBox createTodayInfoCards(String detailedForecast, List<WeatherData.HourlyData> hourlyData) {
+    private VBox createTodayInfoCards(String detailedForecast, List<WeatherData.HourlyData> hourlyData, WeatherData.CurrentData currentData) {
         VBox todayDescription = createTodayDescription(detailedForecast);
+
         VBox hourlyTemperature = createHourlyTemperature(hourlyData);
+
         VBox hourlyPrecipitation = createHourlyPrecipitation(hourlyData);
 
-        VBox main = new VBox(todayDescription, hourlyTemperature, hourlyPrecipitation);
+        HBox humidityAndUV = new HBox(createHumidity(currentData.getHumidity(), currentData.getDewPoint()), createUV(currentData.getUvIndex()));
+        humidityAndUV.setSpacing(22);
+
+        HBox realFeelAndWind = new HBox(createRealFeel(currentData));
+
+        VBox main = new VBox(todayDescription, hourlyTemperature, hourlyPrecipitation, humidityAndUV, realFeelAndWind);
         main.setSpacing(10);
         return main;
     }
@@ -207,10 +221,10 @@ public class CurrentWeatherScene {
         Label hr2 = new Label(hourlyData.get(2).getTime());
         Label hr3 = new Label(hourlyData.get(4).getTime());
         Label hr4 = new Label(hourlyData.get(6).getTime());
-        hr1.getStyleClass().add("xaxis-text");
-        hr2.getStyleClass().add("xaxis-text");
-        hr3.getStyleClass().add("xaxis-text");
-        hr4.getStyleClass().add("xaxis-text");
+        hr1.getStyleClass().add("subtext");
+        hr2.getStyleClass().add("subtext");
+        hr3.getStyleClass().add("subtext");
+        hr4.getStyleClass().add("subtext");
 
         Region spc1 = new Region();
         Region spc2 = new Region();
@@ -363,6 +377,133 @@ public class CurrentWeatherScene {
         return createBox(main);
     }
 
+    private VBox createHumidity(int humidity, double dewpoint) {
+        ImageView rainIcon = Helpers.getIcon("waves", Color.WHITE, 20);
+        Label boxTitle = new Label("Humidity");
+        boxTitle.getStyleClass().add("card-title");
+
+        HBox titleBox = new HBox(rainIcon, boxTitle);
+        titleBox.setSpacing(5);
+        titleBox.setOpacity(0.75);
+
+        Label humidityLabel = new Label(humidity + "%");
+        humidityLabel.getStyleClass().add("big-text");
+
+        VBox topContent = new VBox(titleBox, humidityLabel);
+        topContent.setAlignment(Pos.TOP_LEFT);
+        VBox.setVgrow(topContent, Priority.NEVER);
+
+        Label dew = new Label("The dewpoint is " + dewpoint + "°.");
+        dew.getStyleClass().add("subtext");
+        dew.setWrapText(true);
+
+        VBox bottomContent = new VBox(dew);
+        bottomContent.setAlignment(Pos.BOTTOM_LEFT);
+        bottomContent.setMinHeight(Region.USE_PREF_SIZE);
+        VBox.setVgrow(bottomContent, Priority.ALWAYS);
+
+        VBox main = new VBox(topContent, bottomContent);
+        main.setSpacing(10);
+        main.setMinHeight(137);
+        main.setMinWidth(137);
+
+        return createBox(main);
+    }
+
+
+    private VBox createUV(int UV) {
+        ImageView rainIcon = Helpers.getIcon("sun", Color.WHITE, 20);
+        Label boxTitle = new Label("UV Index");
+        boxTitle.getStyleClass().add("card-title");
+        HBox titleBox = new HBox(rainIcon, boxTitle);
+        titleBox.setSpacing(5);
+        titleBox.setOpacity(0.75);
+
+        Label UVnum = new Label("" + UV);
+        UVnum.getStyleClass().add("big-text");
+
+        String UVClassname = "";
+        if (UV < 3) {
+            UVClassname = "Low";
+        } else if (UV < 6) {
+            UVClassname = "Moderate";
+        } else if (UV < 8) {
+            UVClassname = "High";
+        } else if (UV < 10) {
+            UVClassname = "Very High";
+        }
+
+        Label UVclass = new Label(UVClassname);
+        UVclass.getStyleClass().add("UVClass-text");
+        HBox UVData = new HBox(UVnum, UVclass);
+        UVData.setSpacing(5);
+        UVData.setAlignment(Pos.BOTTOM_LEFT);
+
+        VBox topContent = new VBox(titleBox, UVData);
+        VBox.setVgrow(topContent, Priority.ALWAYS);
+
+
+        HBox uvBar = new HBox();
+        uvBar.setMinHeight(4);
+        uvBar.setMaxHeight(4);
+        uvBar.setMinWidth(137);
+        uvBar.setMaxWidth(137);
+        uvBar.getStyleClass().add("uvBar");
+        uvBar.setAlignment(Pos.CENTER);
+
+        Circle uvIndicator = new Circle(6);
+        uvIndicator.setFill(Color.WHITE);
+        uvIndicator.setStyle("-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 15, 0, 0, 4);");
+        double barWidth = uvBar.getMinWidth();
+        double normalizedUV = Math.max(0, Math.min(UV, 10)) / 10.0;
+        double circleX = normalizedUV * (barWidth - (uvIndicator.getRadius() * 2));
+
+        Pane overlay = new Pane(uvIndicator);
+        overlay.setMinWidth(uvBar.getMinWidth());
+        overlay.setMinHeight(uvBar.getMinHeight());
+        uvIndicator.setTranslateX(circleX);
+        uvIndicator.setTranslateY(6);
+
+        // Stack both together
+        StackPane uvBarGroup = new StackPane(uvBar, overlay);
+        uvBarGroup.setAlignment(Pos.CENTER);
+
+        HBox bottomContent = new HBox(uvBarGroup);
+        bottomContent.setAlignment(Pos.BOTTOM_LEFT);
+
+        VBox main = new VBox(topContent, bottomContent);
+        main.setMinHeight(137);
+        main.setMinWidth(137);
+        return createBox(main);
+    }
+
+    private VBox createRealFeel(WeatherData.CurrentData currentData) {
+        ImageView tempIcon = Helpers.getIcon("thermometer", Color.WHITE, 20);
+        Label boxTitle = new Label("Feels Like");
+        boxTitle.getStyleClass().add("card-title");
+        HBox titleBox = new HBox(tempIcon, boxTitle);
+        titleBox.setSpacing(5);
+        titleBox.setOpacity(0.75);
+
+        int realFeel = Helpers.calculateRealFeel(currentData.getTemperature(), currentData.getHumidity(), currentData.getDewPoint(), currentData.getWindSpeed());
+
+        Label humidityLabel = new Label("" + realFeel);
+        humidityLabel.getStyleClass().add("big-text");
+
+        VBox topContent = new VBox(titleBox, humidityLabel);
+        VBox.setVgrow(topContent, Priority.ALWAYS);
+
+        Label realFeelDesc = new Label(Math.abs(realFeel - currentData.getTemperature()) + "° " + ((realFeel-currentData.getTemperature() < 0) ? "below" : "above") + " the real temperature.");
+        realFeelDesc.getStyleClass().add("subtext");
+
+        VBox bottomContent = new VBox(realFeelDesc);
+
+        VBox main = new VBox(topContent, bottomContent);
+
+        return createBox(main);
+
+
+    }
 
     private Color getColorForForecast(String shortForecast) {
         if (shortForecast.toLowerCase().contains("sunny")) {
@@ -389,7 +530,7 @@ public class CurrentWeatherScene {
             iconPath += isDaytime ? "sun" : "moon";
         }
 
-        return Helpers.getIcon(iconPath, Color.WHITE, size);
+        return Helpers.getIcon(iconPath, getColorForForecast(shortForecast), size);
     }
 
     private void setBackground(VBox root, boolean isDaytime) {
@@ -400,6 +541,8 @@ public class CurrentWeatherScene {
             root.setStyle("-fx-background-image: url('/images/SunnyNight.png');");
         }
     }
+
+
 
     public static Scene getScene() {
         return scene;

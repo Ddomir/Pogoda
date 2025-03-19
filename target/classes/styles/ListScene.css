@@ -10,33 +10,29 @@
 
 .root-title {
     -fx-text-fill: white;
-    -fx-font-family: "Lato-Regular";
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 36;
 }
 
 .location-card {
-    /*-fx-background-color: linear-gradient(to right, #FB8500 0%, #FFCA50 80%);*/
     -fx-background-radius: 15 15 15 15;
-
-    /*-fx-border-color: linear-gradient(to right, #FFCA50, #FB8500);*/
     -fx-border-width: 1px;
     -fx-border-radius: 15;
     -fx-padding: 9 12;
 
     -fx-text-fill: white;
-
     -fx-alignment: center-left;
 }
 
 .location-label {
-    -fx-font-family: "Lato-Black";
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-weight: bold;
     -fx-font-size: 24;
     -fx-text-fill: white;
 }
 
 .temperature-label {
-    -fx-font-family: "Lato-Regular";
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 20;
     -fx-text-fill: white;
 }

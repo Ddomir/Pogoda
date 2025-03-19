@@ -296,7 +296,7 @@ public class ListScene {
             iconPath += isDaytime ? "sun" : "moon";
         }
 
-        return Helpers.getIcon(iconPath, Color.WHITE, size);
+        return Helpers.getIcon(iconPath, getIconColorForForecast(shortForecast, isDaytime), size);
     }
 
     private String getBackgroundColorForForecast(String shortForecast, boolean isDaytime) {
@@ -325,6 +325,21 @@ public class ListScene {
             return "linear-gradient(to right, #C9D0F4 0%, #828CC1 80%)";
         } else {
             return "linear-gradient(to right, #FFCA50, #FB8500)";
+        }
+    }
+
+    private Color getIconColorForForecast(String shortForecast, boolean isDaytime) {
+        System.out.println(shortForecast + isDaytime);
+        if (shortForecast.toLowerCase().contains("sunny") || shortForecast.toLowerCase().contains("clear")) {
+            return isDaytime ? Color.web("#FB8500") : Color.web("#683B99");
+        } else if (shortForecast.toLowerCase().contains("cloudy")) {
+            return Color.web("#998E9B");
+        } else if (shortForecast.toLowerCase().contains("rain")) {
+            return Color.web("#1E90FF");
+        } else if (shortForecast.toLowerCase().contains("snow")) {
+            return Color.web("#828CC1");
+        } else {
+            return Color.web("#FB8500");
         }
     }
 
