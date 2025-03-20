@@ -641,7 +641,6 @@ public class CurrentWeatherScene {
     }
 
     private void setBackground(VBox root, boolean isDaytime) {
-        System.out.println(isDaytime);
         if (isDaytime) {
             root.setStyle("-fx-background-image: url('/images/SunnyDay.png');");
         } else {
@@ -752,10 +751,6 @@ public class CurrentWeatherScene {
             if (barWidth <= 0) {
                 barWidth = 10;
             }
-
-            System.out.println("low: " + low + ", high: " + high);
-            System.out.println("lowPos: " + lowPos + ", highPos: " + highPos);
-            System.out.println("Clip X: " + (lowPos * 1.56) + ", Width: " + (barWidth * 1.56));
 
             Region grayBar = new Region();
             grayBar.setMinWidth(156);
