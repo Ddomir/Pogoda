@@ -183,7 +183,21 @@ public class CurrentWeatherScene {
         description.setWrapText(true);
         description.getStyleClass().add("forecast-description");
 
-        VBox todayDescription = new VBox(description);
+        ScrollPane scrollPane = new ScrollPane(description);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.getStyleClass().add("transparent-scroll-pane");
+        scrollPane.setMinHeight(40);
+        scrollPane.setMaxHeight(117);
+        description.setMaxWidth(Double.MAX_VALUE);
+
+        description.heightProperty().addListener((obs, oldHeight, newHeight) -> {
+            double newScrollPaneHeight = Math.min(newHeight.doubleValue(), 117);
+            scrollPane.setPrefHeight(newScrollPaneHeight);
+        });
+
+        VBox todayDescription = new VBox(scrollPane);
         todayDescription.setFillWidth(true);
         todayDescription.setAlignment(Pos.TOP_LEFT);
 
@@ -471,6 +485,8 @@ public class CurrentWeatherScene {
             UVClassname = "High";
         } else if (UV < 10) {
             UVClassname = "Very High";
+        } else {
+            UVClassname = "Extreme";
         }
 
         Label UVclass = new Label(UVClassname);
@@ -594,30 +610,34 @@ public class CurrentWeatherScene {
         return createBox(main);
     }
 
-    private Color getColorForForecast(String shortForecast) {
-        if (!shortForecast.toLowerCase().contains("sunny") || !shortForecast.toLowerCase().contains("clear")) {
-            return Color.web("#FFFFFF");
+    private Color getColorForForecast(String shortForecast, boolean isDaytime) {
+        String lowerCaseForecast = shortForecast.toLowerCase();
+
+        if (lowerCaseForecast.contains("sunny") || lowerCaseForecast.contains("clear")) {
+            return isDaytime ? Color.web("#FFE32C") : Color.web("#FFFFFF");
         } else {
-            return Color.web("#FFE32C");
+            return Color.web("#FFFFFF");
         }
     }
 
     private ImageView getWeatherIcon(String shortForecast, int size, boolean isDaytime) {
         String iconPath = "";
+        String lowerCaseForecast = shortForecast.toLowerCase();
 
-        if (shortForecast.toLowerCase().contains("sunny")) {
+        if (lowerCaseForecast.contains("sunny") || lowerCaseForecast.contains("clear")) {
             iconPath += isDaytime ? "sun" : "moon";
-        } else if (shortForecast.toLowerCase().contains("cloudy")) {
+        } else if (lowerCaseForecast.contains("cloudy")) {
             iconPath += isDaytime ? "cloudy" : "cloud-moon";
-        } else if (shortForecast.toLowerCase().contains("rain")) {
+        } else if (lowerCaseForecast.contains("rain") || lowerCaseForecast.contains("shower")) {
             iconPath += "cloud-rain";
-        } else if (shortForecast.toLowerCase().contains("snow")) {
+        } else if (lowerCaseForecast.contains("snow")) {
             iconPath += "cloud-snow";
         } else {
             iconPath += isDaytime ? "sun" : "moon";
         }
 
-        return Helpers.getIcon(iconPath, getColorForForecast(shortForecast), size);
+        Color iconColor = getColorForForecast(shortForecast, isDaytime);
+        return Helpers.getIcon(iconPath, iconColor, size);
     }
 
     private void setBackground(VBox root, boolean isDaytime) {
@@ -674,7 +694,11 @@ public class CurrentWeatherScene {
     }
 
     private VBox createWeeklyInfoCards(List<WeatherData.DailyData> dailyData) {
-        return create7DayForecast(dailyData);
+        VBox forecast = create7DayForecast(dailyData);
+        VBox precipitation = create7DayPrecipitation(dailyData);
+        VBox main = new VBox(forecast, precipitation);
+        main.setSpacing(12);
+        return main;
     }
 
     private VBox create7DayForecast(List<WeatherData.DailyData> dailyData) {
@@ -695,10 +719,12 @@ public class CurrentWeatherScene {
         int range = max - min;
 
         for (WeatherData.DailyData day : dailyData) {
-            int low = (int) Math.round(day.getNightTemperature());
-            int high = (int) Math.round(day.getDayTemperature());
+            int rawLow = (int) Math.round(day.getNightTemperature());
+            int rawHigh = (int) Math.round(day.getDayTemperature());
 
-            // Day name and icon
+            int low = Math.min(rawLow, rawHigh);
+            int high = Math.max(rawLow, rawHigh);
+
             Label dayLabel = new Label(Helpers.getDayName(day.getTime()));
             dayLabel.getStyleClass().add("normal-text");
             dayLabel.setMinWidth(55);
@@ -719,12 +745,18 @@ public class CurrentWeatherScene {
             lowLabel.setAlignment(Pos.CENTER);
             highLabel.setAlignment(Pos.CENTER);
 
-            // Bar positioning
-            double lowPos = ((double) (low - min) / range) * 100;
-            double highPos = ((double) (high - min) / range) * 100;
+            double lowPos = range > 0 ? ((double) (low - min) / range) * 100 : 0;
+            double highPos = range > 0 ? ((double) (high - min) / range) * 100 : 100;
             double barWidth = highPos - lowPos;
 
-            // Gray background bar (full width)
+            if (barWidth <= 0) {
+                barWidth = 10;
+            }
+
+            System.out.println("low: " + low + ", high: " + high);
+            System.out.println("lowPos: " + lowPos + ", highPos: " + highPos);
+            System.out.println("Clip X: " + (lowPos * 1.56) + ", Width: " + (barWidth * 1.56));
+
             Region grayBar = new Region();
             grayBar.setMinWidth(156);
             grayBar.setMaxWidth(156);
@@ -732,7 +764,6 @@ public class CurrentWeatherScene {
             grayBar.setMaxHeight(6);
             grayBar.getStyleClass().add("gray-bar");
 
-            // Colored Bar (full width)
             Region tempBar = new Region();
             tempBar.setMinWidth(156);
             tempBar.setMaxWidth(156);
@@ -740,22 +771,21 @@ public class CurrentWeatherScene {
             tempBar.setMaxHeight(6);
             tempBar.getStyleClass().add("temp-bar");
 
-            // Create a clip for the colored bar
             Rectangle clip = new Rectangle();
             clip.setWidth(barWidth * 1.56);
             clip.setHeight(6);
             clip.setX(lowPos * 1.56);
-            tempBar.setClip(clip);
             clip.setArcHeight(10);
             clip.setArcWidth(10);
+            tempBar.setClip(clip);
 
-            // Position the colored bar within the gray bar
             StackPane barContainer = new StackPane();
             barContainer.setMinWidth(156);
             barContainer.setMaxWidth(156);
             barContainer.setMinHeight(6);
             barContainer.setMaxHeight(6);
             barContainer.getChildren().addAll(grayBar, tempBar);
+            tempBar.toFront();
 
             HBox tempBarComponent = new HBox(lowLabel, barContainer, highLabel);
             tempBarComponent.setAlignment(Pos.CENTER_RIGHT);
@@ -763,11 +793,94 @@ public class CurrentWeatherScene {
             // Row layout
             HBox row = new HBox(dayIcon, tempBarComponent);
             row.setAlignment(Pos.CENTER_LEFT);
-            row.setSpacing(2);
+            row.setSpacing(4);
             dayRows.getChildren().add(row);
         }
         VBox main = new VBox(titleBox, dayRows);
         main.setSpacing(5);
+        return createBox(main);
+    }
+
+    private VBox create7DayPrecipitation(List<WeatherData.DailyData> dailyData) {
+        ImageView calIcon = Helpers.getIcon("calendar-days", Color.WHITE, 20);
+        Label boxTitle = new Label("Upcoming Precipitation");
+        boxTitle.getStyleClass().add("card-title");
+        HBox titleBox = new HBox(calIcon, boxTitle);
+        titleBox.setSpacing(5);
+        titleBox.setOpacity(0.75);
+
+        HBox weekCols = new HBox();
+        weekCols.setSpacing(10);
+        weekCols.setAlignment(Pos.CENTER);
+
+        for (WeatherData.DailyData day : dailyData) {
+            VBox dayColumn = new VBox();
+            dayColumn.setAlignment(Pos.CENTER);
+            HBox.setHgrow(dayColumn, Priority.ALWAYS);
+
+            double precipitation = day.getPrecipitationChance();
+
+            // Precipitation percentage
+            Label precipLabel = new Label((precipitation > 10) ? (int) precipitation + "%" : "");
+            precipLabel.getStyleClass().add("precip-label");
+            precipLabel.setMinWidth(Region.USE_PREF_SIZE);
+
+            // Precipitation bar container
+            StackPane precipBar = new StackPane();
+            precipBar.setMinWidth(12);
+            precipBar.setMaxWidth(12);
+            precipBar.setMinHeight(100);
+            precipBar.getStyleClass().add("precip-bar");
+
+            Region precipFill = new Region();
+            precipFill.setMinWidth(12);
+            precipFill.setMaxWidth(12);
+            precipFill.setMinHeight(precipitation);
+            precipFill.getStyleClass().add("precip-fill");
+            Rectangle clip = new Rectangle(12, precipitation);
+            precipFill.setClip(clip);
+
+            VBox barContainer = new VBox(precipLabel, precipFill);
+            barContainer.setAlignment(Pos.BOTTOM_CENTER);
+            barContainer.setSpacing(5);
+
+            precipBar.getChildren().add(barContainer);
+            VBox.setVgrow(precipBar, Priority.ALWAYS);
+
+            dayColumn.getChildren().addAll(precipBar);
+            weekCols.getChildren().add(dayColumn);
+        }
+
+        Rectangle line = new Rectangle();
+        line.setHeight(1);
+        line.widthProperty().bind(weekCols.widthProperty());
+        line.getStyleClass().add("line");
+
+        HBox daysAxis = new HBox();
+        HBox.setHgrow(daysAxis, Priority.ALWAYS);
+        daysAxis.setSpacing(39);
+        daysAxis.setAlignment(Pos.CENTER);
+
+        for (WeatherData.DailyData day : dailyData) {
+            Label dayLetter = new Label(Helpers.getDayLetter(day.getTime()));
+            dayLetter.getStyleClass().add("day-letter");
+            dayLetter.setMinWidth(Region.USE_PREF_SIZE);
+
+            VBox dayLetterBox = new VBox(dayLetter);
+            dayLetterBox.setAlignment(Pos.CENTER);
+            dayLetterBox.setMinWidth(Region.USE_PREF_SIZE);
+            dayLetterBox.setMaxWidth(Region.USE_PREF_SIZE);
+            HBox.setHgrow(dayLetterBox, Priority.ALWAYS);
+
+            daysAxis.getChildren().add(dayLetterBox);
+        }
+
+        VBox barAndLine = new VBox(new VBox(weekCols, line), daysAxis);
+        barAndLine.setAlignment(Pos.CENTER);
+        barAndLine.setSpacing(5);
+
+        VBox main = new VBox(titleBox, barAndLine);
+        main.setSpacing(10);
         return createBox(main);
     }
 

@@ -6,10 +6,10 @@ public class ZipcodeManager {
     private static final String FILE_PATH = "zipcodes.txt";
     private static List<String> zipCodesCache; // Cache for zip codes
 
-    // Load zip codes from file (cached)
+    // Load zip codes from file
     public static List<String> loadZipCodes() {
         if (zipCodesCache != null) {
-            return zipCodesCache; // Return cached data
+            return zipCodesCache;
         }
 
         zipCodesCache = new ArrayList<>();

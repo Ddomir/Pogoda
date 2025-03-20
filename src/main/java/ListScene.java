@@ -117,7 +117,7 @@ public class ListScene {
         HBox.setHgrow(locationCardContainer, Priority.ALWAYS);
         locationCardContainer.setSpacing(10);
 
-        // Store the zip code in the userData property
+        // Store the zip code in txt
         locationCardContainer.setUserData(zipCode);
 
         // Change to location weather scene
@@ -174,8 +174,8 @@ public class ListScene {
                 return;
             }
 
-            // Check if the zip code exists in the ZipcodeLocator
-            ZipcodeLocator.Location location = ZipcodeLocator.getInstance().getLocationData(newZipCode); // Use singleton
+            ZipcodeLocator zipcodeLocator = new ZipcodeLocator();
+            ZipcodeLocator.Location location = zipcodeLocator.getLocationData(newZipCode);
             if (location == null) {
                 showAlert("Invalid Zip Code", "The entered zip code does not exist.");
                 return;
@@ -210,7 +210,6 @@ public class ListScene {
     }
 
     private void toggleEditMode(boolean isEditing, HBox addFieldContainer) {
-        // Show or hide the addFieldContainer based on edit mode
         if (isEditing) {
             if (!locationCards.getChildren().contains(addFieldContainer)) {
                 locationCards.getChildren().add(addFieldContainer);
@@ -229,7 +228,6 @@ public class ListScene {
                 }
 
                 if (isEditing) {
-                    // Add the minus button if it doesn't already exist
                     boolean hasRemoveButton = locationCardContainer.getChildren().stream()
                             .anyMatch(child -> child instanceof HBox && child.getStyleClass().contains("remove-button"));
 
@@ -241,9 +239,8 @@ public class ListScene {
                         removeButton.setPrefSize(34, 34);
                         removeButton.setMaxHeight(34);
 
-                        // Add action to remove the location card
                         removeButton.setOnMouseClicked(e -> {
-                            String zipCode = (String) locationCardContainer.getUserData(); // Store zipCode in userData
+                            String zipCode = (String) locationCardContainer.getUserData();
                             zipCodes.remove(zipCode);
                             ZipcodeManager.saveZipCodes(zipCodes);
                             refreshLocationCards();
@@ -288,7 +285,7 @@ public class ListScene {
             iconPath += isDaytime ? "sun" : "moon";
         } else if (shortForecast.toLowerCase().contains("cloudy")) {
             iconPath += isDaytime ? "cloudy" : "cloud-moon";
-        } else if (shortForecast.toLowerCase().contains("rain")) {
+        } else if (shortForecast.toLowerCase().contains("rain") || shortForecast.toLowerCase().contains("shower")) {
             iconPath += "cloud-rain";
         } else if (shortForecast.toLowerCase().contains("snow")) {
             iconPath += "cloud-snow";
@@ -300,12 +297,11 @@ public class ListScene {
     }
 
     private String getBackgroundColorForForecast(String shortForecast, boolean isDaytime) {
-        System.out.println(shortForecast + isDaytime);
         if (shortForecast.toLowerCase().contains("sunny") || shortForecast.toLowerCase().contains("clear")) {
             return isDaytime ? "linear-gradient(to right, #FB8500 0%, #FFCA50 80%)" : "linear-gradient(to right, #683B99 0%, #C766FF 80%)";
         } else if (shortForecast.toLowerCase().contains("cloudy")) {
             return "linear-gradient(to right, #998E9B 0%, #D0C3D0 80%)";
-        } else if (shortForecast.toLowerCase().contains("rain")) {
+        } else if (shortForecast.toLowerCase().contains("rain") || shortForecast.toLowerCase().contains("shower")) {
             return "linear-gradient(to right, #1E90FF 0%, #87CEEB 80%)";
         } else if (shortForecast.toLowerCase().contains("snow")) {
             return "linear-gradient(to right, #828CC1 0%, #C9D0F4 80%)";
@@ -319,7 +315,7 @@ public class ListScene {
             return isDaytime ? "linear-gradient(to right, #FFCA50, #FB8500)" : "linear-gradient(to right, #C766FF, #683B99)";
         } else if (shortForecast.toLowerCase().contains("cloudy")) {
             return "linear-gradient(to right, #D0C3D0, #998E9B)";
-        } else if (shortForecast.toLowerCase().contains("rain")) {
+        } else if (shortForecast.toLowerCase().contains("rain") || shortForecast.toLowerCase().contains("shower")) {
             return "linear-gradient(to right, #87CEEB, #1E90FF)";
         } else if (shortForecast.toLowerCase().contains("snow")) {
             return "linear-gradient(to right, #C9D0F4 0%, #828CC1 80%)";
@@ -329,12 +325,11 @@ public class ListScene {
     }
 
     private Color getIconColorForForecast(String shortForecast, boolean isDaytime) {
-        System.out.println(shortForecast + isDaytime);
         if (shortForecast.toLowerCase().contains("sunny") || shortForecast.toLowerCase().contains("clear")) {
             return isDaytime ? Color.web("#FB8500") : Color.web("#683B99");
         } else if (shortForecast.toLowerCase().contains("cloudy")) {
             return Color.web("#998E9B");
-        } else if (shortForecast.toLowerCase().contains("rain")) {
+        } else if (shortForecast.toLowerCase().contains("rain") || shortForecast.toLowerCase().contains("shower")) {
             return Color.web("#1E90FF");
         } else if (shortForecast.toLowerCase().contains("snow")) {
             return Color.web("#828CC1");

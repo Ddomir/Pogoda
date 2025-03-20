@@ -20,7 +20,6 @@ public class Helpers {
         iconView.setFitHeight(size);
         iconView.setPreserveRatio(true);
 
-        // Adjust icon color based on forecast
         ColorAdjust colorAdjust = new ColorAdjust();
         colorAdjust.setBrightness(1);
         InnerShadow colorOverlay = new InnerShadow();
@@ -86,5 +85,10 @@ public class Helpers {
         } else {
             return date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
         }
+    }
+
+    public static String getDayLetter(String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return date.getDayOfWeek().getDisplayName(TextStyle.NARROW, Locale.ENGLISH);
     }
 }

@@ -7,19 +7,11 @@ import java.util.Map;
 
 public class ZipcodeLocator {
 
-    private static ZipcodeLocator instance;
     private Map<String, Location> zipCodeMap;
 
+    // Constructor initializes the map
     public ZipcodeLocator() {
         zipCodeMap = new HashMap<>();
-    }
-
-    // Singleton instance
-    public static ZipcodeLocator getInstance() {
-        if (instance == null) {
-            instance = new ZipcodeLocator();
-        }
-        return instance;
     }
 
     // Location class to hold the details of each ZIP code
@@ -65,10 +57,9 @@ public class ZipcodeLocator {
         public String getForecastHourlyURL() { return forecastHourlyURL; }
     }
 
-    // Method to load ZIP codes from the CSV file (lazy initialization)
     private void loadZipCodes() {
         if (!zipCodeMap.isEmpty()) {
-            return; // Already loaded
+            return;
         }
 
         String csvFile = "/uszips.csv";
@@ -76,7 +67,7 @@ public class ZipcodeLocator {
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
             String line;
-            reader.readLine(); // Skip the header line
+            reader.readLine();
             while ((line = reader.readLine()) != null) {
                 String[] fields = line.split(",");
                 if (fields.length == 6) {
@@ -97,7 +88,7 @@ public class ZipcodeLocator {
 
     // Method to get location data by ZIP code
     public Location getLocationData(String zipCode) {
-        loadZipCodes(); // Ensure the data is loaded
+        loadZipCodes();
         return zipCodeMap.get(zipCode);
     }
 }

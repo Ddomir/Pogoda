@@ -41,7 +41,7 @@
     -fx-background-radius: 15;
     -fx-border-radius: 15;
 
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.45));
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.35));
     -fx-border-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.35));
     -fx-border-width: 1px;
 
@@ -137,6 +137,31 @@
 .temp-bar {
     -fx-background-color: linear-gradient(to right, #7BD3FF, #A3E5FF, #FFFA69);
     -fx-background-radius: 15;
+}
+
+.precip-label {
+    -fx-text-fill: white;
+    -fx-font-size: 10px;
+    -fx-alignment: center;
+}
+
+.precip-bar {
+    -fx-background-color: transparent;
+}
+
+.precip-fill {
+    -fx-background-color: linear-gradient(to bottom, #7BD3FF, #A3E5FF); /* Gradient fill */
+    -fx-background-radius: 6 6 0 0;
+}
+
+.day-letter {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-alignment: center;
+}
+
+.line {
+    -fx-fill: white;
 }
 
 
